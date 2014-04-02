@@ -28,3 +28,7 @@ PortIndex*
 dist
 *.app
 *.dmg
+
+nbproject
+obj
+obj-test
