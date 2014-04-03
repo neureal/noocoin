@@ -1,7 +1,7 @@
 src/*.exe
-src/ppcoin
-src/ppcoind
-src/test_ppcoin
+src/noocoin
+src/noocoind
+src/test_noocoin
 src/build.h
 .*.swp
 *.*~*
@@ -10,11 +10,11 @@ src/build.h
 *.orig
 *.o
 *.patch
-.ppcoin
+.noocoin
 #compilation and Qt preprocessor part
 *.qm
 Makefile
-ppcoin-qt
+noocoin-qt
 #resources cpp
 qrc_*.cpp
 #qt creator

@@ -4,13 +4,13 @@
     <name>AboutDialog</name>
     <message>
         <location filename="../forms/aboutdialog.ui" line="14"/>
-        <source>About PPCoin</source>
-        <translation>O PPCoinu</translation>
+        <source>About Noocoin</source>
+        <translation>O Noocoinu</translation>
     </message>
     <message>
         <location filename="../forms/aboutdialog.ui" line="53"/>
-        <source>&lt;b&gt;PPCoin&lt;/b&gt; version</source>
-        <translation>&lt;b&gt;PPCoin&lt;/b&gt; verzija</translation>
+        <source>&lt;b&gt;Noocoin&lt;/b&gt; version</source>
+        <translation>&lt;b&gt;Noocoin&lt;/b&gt; verzija</translation>
     </message>
     <message>
         <location filename="../forms/aboutdialog.ui" line="85"/>
@@ -33,8 +33,8 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location filename="../forms/addressbookpage.ui" line="20"/>
-        <source>These are your PPCoin addresses for receiving payments.  You may want to give a different one to each sender so you can keep track of who is paying you.</source>
-        <translation>Ovo su vaše PPCoin adrese za primanje isplate. Možda želite dati drukčiju adresu svakom primatelju tako da možete pratiti tko je platio.</translation>
+        <source>These are your Noocoin addresses for receiving payments.  You may want to give a different one to each sender so you can keep track of who is paying you.</source>
+        <translation>Ovo su vaše Noocoin adrese za primanje isplate. Možda želite dati drukčiju adresu svakom primatelju tako da možete pratiti tko je platio.</translation>
     </message>
     <message>
         <location filename="../forms/addressbookpage.ui" line="33"/>
@@ -220,9 +220,9 @@ This product includes software developed by the OpenSSL Project for use in the O
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="102"/>
-        <source>WARNING: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR PPCoinS&lt;/b&gt;!
+        <source>WARNING: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NoocoinS&lt;/b&gt;!
 Are you sure you wish to encrypt your wallet?</source>
-        <translation>UPOZORENJE: Ako šifrirate vaš novčanik i izgubite lozinku, &lt;b&gt;IZGUBIT ĆETE SVE SVOJE PPCoinSE!&lt;/b&gt;
+        <translation>UPOZORENJE: Ako šifrirate vaš novčanik i izgubite lozinku, &lt;b&gt;IZGUBIT ĆETE SVE SVOJE NoocoinSE!&lt;/b&gt;
 Jeste li sigurni da želite šifrirati svoj novčanik?</translation>
     </message>
     <message>
@@ -233,7 +233,7 @@ Jeste li sigurni da želite šifrirati svoj novčanik?</translation>
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="112"/>
-        <source>PPCoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your PPCoins from being stolen by malware infecting your computer.</source>
+        <source>Noocoin will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your Noocoins from being stolen by malware infecting your computer.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -285,11 +285,11 @@ Jeste li sigurni da želite šifrirati svoj novčanik?</translation>
     </message>
 </context>
 <context>
-    <name>PPCoinGUI</name>
+    <name>NoocoinGUI</name>
     <message>
         <location filename="../bitcoingui.cpp" line="69"/>
-        <source>PPCoin Wallet</source>
-        <translation>PPCoin novčanik</translation>
+        <source>Noocoin Wallet</source>
+        <translation>Noocoin novčanik</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="142"/>
@@ -349,8 +349,8 @@ Jeste li sigurni da želite šifrirati svoj novčanik?</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="201"/>
-        <source>Send coins to a PPCoin address</source>
-        <translation>Slanje novca na PPCoin adresu</translation>
+        <source>Send coins to a Noocoin address</source>
+        <translation>Slanje novca na Noocoin adresu</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="206"/>
@@ -379,8 +379,8 @@ Jeste li sigurni da želite šifrirati svoj novčanik?</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="231"/>
-        <source>Show information about PPCoin</source>
-        <translation>Prikaži informacije o PPCoinu</translation>
+        <source>Show information about Noocoin</source>
+        <translation>Prikaži informacije o Noocoinu</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="233"/>
@@ -399,18 +399,18 @@ Jeste li sigurni da želite šifrirati svoj novčanik?</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="237"/>
-        <source>Modify configuration options for PPCoin</source>
-        <translation>Promijeni postavke konfiguracije za PPCoin</translation>
+        <source>Modify configuration options for Noocoin</source>
+        <translation>Promijeni postavke konfiguracije za Noocoin</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="239"/>
-        <source>Open &amp;PPCoin</source>
-        <translation>Otvori &amp;PPCoin</translation>
+        <source>Open &amp;Noocoin</source>
+        <translation>Otvori &amp;Noocoin</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="240"/>
-        <source>Show the PPCoin window</source>
-        <translation>Prikaži PPCoin prozor</translation>
+        <source>Show the Noocoin window</source>
+        <translation>Prikaži Noocoin prozor</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="241"/>
@@ -484,13 +484,13 @@ Jeste li sigurni da želite šifrirati svoj novčanik?</translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="407"/>
-        <source>PPCoin-qt</source>
-        <translation>PPCoin-qt</translation>
+        <source>Noocoin-qt</source>
+        <translation>Noocoin-qt</translation>
     </message>
     <message numerus="yes">
         <location filename="../bitcoingui.cpp" line="449"/>
-        <source>%n active connection(s) to PPCoin network</source>
-        <translation><numerusform>%n aktivna veza na PPCoin mrežu</numerusform><numerusform>%n aktivne veze na PPCoin mrežu</numerusform><numerusform>%n aktivnih veza na PPCoin mrežu</numerusform></translation>
+        <source>%n active connection(s) to Noocoin network</source>
+        <translation><numerusform>%n aktivna veza na Noocoin mrežu</numerusform><numerusform>%n aktivne veze na Noocoin mrežu</numerusform><numerusform>%n aktivnih veza na Noocoin mrežu</numerusform></translation>
     </message>
     <message>
         <location filename="../bitcoingui.cpp" line="475"/>
@@ -611,7 +611,7 @@ Adresa:%4
     <message>
         <location filename="../optionsdialog.cpp" line="274"/>
         <source>Choose the default subdivision unit to show in the interface, and when sending coins</source>
-        <translation>Izaberite željeni najmanji dio PPCoina koji će biti prikazan u sučelju i koji će se koristiti za plaćanje.</translation>
+        <translation>Izaberite željeni najmanji dio Noocoina koji će biti prikazan u sučelju i koji će se koristiti za plaćanje.</translation>
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="281"/>
@@ -673,8 +673,8 @@ Adresa:%4
     </message>
     <message>
         <location filename="../editaddressdialog.cpp" line="96"/>
-        <source>The entered address &quot;%1&quot; is not a valid PPCoin address.</source>
-        <translation>Upisana adresa &quot;%1&quot; nije valjana PPCoin adresa.</translation>
+        <source>The entered address &quot;%1&quot; is not a valid Noocoin address.</source>
+        <translation>Upisana adresa &quot;%1&quot; nije valjana Noocoin adresa.</translation>
     </message>
     <message>
         <location filename="../editaddressdialog.cpp" line="101"/>
@@ -691,13 +691,13 @@ Adresa:%4
     <name>MainOptionsPage</name>
     <message>
         <location filename="../optionsdialog.cpp" line="170"/>
-        <source>&amp;Start PPCoin on window system startup</source>
-        <translation>&amp;Pokreni PPCoin kod pokretanja sustava</translation>
+        <source>&amp;Start Noocoin on window system startup</source>
+        <translation>&amp;Pokreni Noocoin kod pokretanja sustava</translation>
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="171"/>
-        <source>Automatically start PPCoin after the computer is turned on</source>
-        <translation>Automatski pokreni PPCoin kad se uključi računalo</translation>
+        <source>Automatically start Noocoin after the computer is turned on</source>
+        <translation>Automatski pokreni Noocoin kad se uključi računalo</translation>
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="175"/>
@@ -716,8 +716,8 @@ Adresa:%4
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="181"/>
-        <source>Automatically open the PPCoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatski otvori port PPCoin klijenta na ruteru. To radi samo ako ruter podržava UPnP i ako je omogućen.</translation>
+        <source>Automatically open the Noocoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automatski otvori port Noocoin klijenta na ruteru. To radi samo ako ruter podržava UPnP i ako je omogućen.</translation>
     </message>
     <message>
         <location filename="../optionsdialog.cpp" line="185"/>
@@ -1177,8 +1177,8 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../sendcoinsentry.cpp" line="25"/>
-        <source>Enter a PPCoin address (e.g. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</source>
-        <translation>Unesite PPCoin adresu (npr. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</translation>
+        <source>Enter a Noocoin address (e.g. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</source>
+        <translation>Unesite Noocoin adresu (npr. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)</translation>
     </message>
 </context>
 <context>
@@ -1626,11 +1626,11 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
-    <name>PPCoin-core</name>
+    <name>Noocoin-core</name>
     <message>
         <location filename="../bitcoinstrings.cpp" line="3"/>
-        <source>PPCoin version</source>
-        <translation>PPCoin verzija</translation>
+        <source>Noocoin version</source>
+        <translation>Noocoin verzija</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="4"/>
@@ -1639,8 +1639,8 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="5"/>
-        <source>Send command to -server or ppcoind</source>
-        <translation>Pošalji komandu usluzi -server ili ppcoind</translation>
+        <source>Send command to -server or noocoind</source>
+        <translation>Pošalji komandu usluzi -server ili noocoind</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="6"/>
@@ -1659,13 +1659,13 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="9"/>
-        <source>Specify configuration file (default: PPCoin.conf)</source>
-        <translation>Odredi konfiguracijsku datoteku (ugrađeni izbor: PPCoin.conf)</translation>
+        <source>Specify configuration file (default: Noocoin.conf)</source>
+        <translation>Odredi konfiguracijsku datoteku (ugrađeni izbor: Noocoin.conf)</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="10"/>
-        <source>Specify pid file (default: ppcoind.pid)</source>
-        <translation>Odredi proces ID datoteku (ugrađeni izbor: PPCoin.pid)</translation>
+        <source>Specify pid file (default: noocoind.pid)</source>
+        <translation>Odredi proces ID datoteku (ugrađeni izbor: Noocoin.pid)</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="11"/>
@@ -1840,8 +1840,8 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitcoinstrings.cpp" line="47"/>
         <source>
-SSL options: (see the PPCoin Wiki for SSL setup instructions)</source>
-        <translation>SSL postavke: (za detalje o podešavanju SSL opcija vidi PPCoin Wiki)</translation>
+SSL options: (see the Noocoin Wiki for SSL setup instructions)</source>
+        <translation>SSL postavke: (za detalje o podešavanju SSL opcija vidi Noocoin Wiki)</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="50"/>
@@ -1870,8 +1870,8 @@ SSL options: (see the PPCoin Wiki for SSL setup instructions)</source>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="57"/>
-        <source>Cannot obtain a lock on data directory %s.  PPCoin is probably already running.</source>
-        <translation>Program ne može pristupiti direktoriju s datotekama %s. PPCoin program je vjerojatno već pokrenut.</translation>
+        <source>Cannot obtain a lock on data directory %s.  Noocoin is probably already running.</source>
+        <translation>Program ne može pristupiti direktoriju s datotekama %s. Noocoin program je vjerojatno već pokrenut.</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="60"/>
@@ -1895,12 +1895,12 @@ SSL options: (see the PPCoin Wiki for SSL setup instructions)</source>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="66"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of PPCoin</source>
+        <source>Error loading wallet.dat: Wallet requires newer version of Noocoin</source>
         <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="67"/>
-        <source>Wallet needed to be rewritten: restart PPCoin to complete</source>
+        <source>Wallet needed to be rewritten: restart Noocoin to complete</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -1955,13 +1955,13 @@ SSL options: (see the PPCoin Wiki for SSL setup instructions)</source>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="78"/>
-        <source>Unable to bind to port %d on this computer.  PPCoin is probably already running.</source>
-        <translation>Program ne može koristiti port %d na ovom računalu.  PPCoin program je vjerojatno već pokrenut.</translation>
+        <source>Unable to bind to port %d on this computer.  Noocoin is probably already running.</source>
+        <translation>Program ne može koristiti port %d na ovom računalu.  Noocoin program je vjerojatno već pokrenut.</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="81"/>
-        <source>Warning: Please check that your computer&apos;s date and time are correct.  If your clock is wrong PPCoin will not work properly.</source>
-        <translation>Upozorenje: Molimo provjerite jesu li datum i vrijeme na vašem računalu točni. Ako vaš sat ide krivo, PPCoin neće raditi ispravno.</translation>
+        <source>Warning: Please check that your computer&apos;s date and time are correct.  If your clock is wrong Noocoin will not work properly.</source>
+        <translation>Upozorenje: Molimo provjerite jesu li datum i vrijeme na vašem računalu točni. Ako vaš sat ide krivo, Noocoin neće raditi ispravno.</translation>
     </message>
     <message>
         <location filename="../bitcoinstrings.cpp" line="84"/>

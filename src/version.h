@@ -27,17 +27,17 @@ extern const std::string CLIENT_NAME;
 extern const std::string CLIENT_BUILD;
 extern const std::string CLIENT_DATE;
 
-// ppcoin version - intended for display purpose ONLY
-#define PPCOIN_VERSION_MAJOR       0
-#define PPCOIN_VERSION_MINOR       4
-#define PPCOIN_VERSION_REVISION    0
-#define PPCOIN_VERSION_BUILD       0
+// noocoin version - intended for display purpose ONLY
+#define BITCOIN_VERSION_MAJOR       0
+#define BITCOIN_VERSION_MINOR       4
+#define BITCOIN_VERSION_REVISION    0
+#define BITCOIN_VERSION_BUILD       0
 
-static const int PPCOIN_VERSION =
-                           1000000 * PPCOIN_VERSION_MAJOR
-                         +   10000 * PPCOIN_VERSION_MINOR
-                         +     100 * PPCOIN_VERSION_REVISION
-                         +       1 * PPCOIN_VERSION_BUILD;
+static const int BITCOIN_VERSION =
+                           1000000 * BITCOIN_VERSION_MAJOR
+                         +   10000 * BITCOIN_VERSION_MINOR
+                         +     100 * BITCOIN_VERSION_REVISION
+                         +       1 * BITCOIN_VERSION_BUILD;
 
 //
 // network protocol versioning
