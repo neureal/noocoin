@@ -253,7 +253,7 @@ public:
         vch2[2] = (nSize >> 8) & 0xff;
         vch2[3] = (nSize >> 0) & 0xff;
         // swap data to big endian
-        reverse_copy(vch.begin(), vch.end(), vch2.begin() + 4);
+        std::reverse_copy(vch.begin(), vch.end(), vch2.begin() + 4);
         BN_mpi2bn(&vch2[0], vch2.size(), this);
     }
 
@@ -265,7 +265,7 @@ public:
         std::vector<unsigned char> vch(nSize);
         BN_bn2mpi(this, &vch[0]);
         vch.erase(vch.begin(), vch.begin() + 4);
-        reverse(vch.begin(), vch.end());
+        std::reverse(vch.begin(), vch.end());
         return vch;
     }
 
@@ -346,7 +346,7 @@ public:
         }
         if (BN_is_negative(this))
             str += "-";
-        reverse(str.begin(), str.end());
+        std::reverse(str.begin(), str.end());
         return str;
     }
 

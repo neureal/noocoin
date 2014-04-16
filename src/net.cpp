@@ -997,11 +997,12 @@ void MapPort(bool /* unused fMapPort */)
 // The second name should resolve to a list of seed addresses.
 // testnet dns seed begins with 't', all else are noocoin dns seeds.
 static const char *strDNSSeed[][2] = {
-    {"seed", "seed.noocoin.org"},
-    {"seedppc", "seedppc.noocoin.org"},
-    {"altcointech", "dnsseed.ppc.altcointech.net"},
-    {"tnseed", "tnseed.noocoin.org"},
-    {"tnseedppc", "tnseedppc.noocoin.org"},
+	
+    {"seed", "home.bown.net"},
+    //{"seed", "seed.noocoin.org"},
+    //{"seednoo", "seednoo.noocoin.org"},
+    //{"tnseed", "tnseed.noocoin.org"},
+    //{"tnseednoo", "tnseednoo.noocoin.org"},
 };
 
 void ThreadDNSAddressSeed(void* parg)
@@ -1070,9 +1071,9 @@ void ThreadDNSAddressSeed2(void* parg)
 // Physical IP seeds: 32-bit IPv4 addresses: e.g. 178.33.22.32 = 0x201621b2
 unsigned int pnSeed[] =
 {
-    0x36a3b545, 0x3c1c26d8, 0x4031eb6d, 0x4d3463d1, 0x586a6854, 0x5da9ae65,
-    0x6deb7318, 0x9083fb63, 0x961bf618, 0xcabd2e4e, 0xcb766dd5, 0xdd514518,
-    0xdff010b8, 0xe9bb6044, 0xedb24a4c,
+	//0x321276b1, //50.18.118.177 nootera.com
+    //0x62ca142d, //98.202.20.45 home.bown.net
+    0xc0a802d2, //192.168.2.210
 };
 
 void DumpAddresses()

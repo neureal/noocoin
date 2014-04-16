@@ -60,7 +60,7 @@
 #
 #
 
-USE_UPNP:=0
+USE_UPNP:=1
 
 INCLUDEPATHS= \
  -I"C:\msys\home\Wil\deps\boost_1_55_0" \
@@ -83,9 +83,9 @@ LIBS= \
 
 #DEFS=-DWIN32 -D_WINDOWS -DBOOST_THREAD_POSIX -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE
 DEFS=-DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE
-DEBUGFLAGS=-g
+DEBUGFLAGS=-g3 -gdwarf-2
 #CFLAGS=-static -pthread -O2 -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
-CFLAGS=-static -mthreads -O2 -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
+CFLAGS=-static -mthreads -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 

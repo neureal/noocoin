@@ -15,10 +15,10 @@
 #include <string>
 #include "uint256.h"
 
-#define BITCOIN_PORT  9901
-#define RPC_PORT     9902
-#define TESTNET_PORT 9903
-#define TESTNET_RPC_PORT 9904
+#define BITCOIN_PORT  41800
+#define RPC_PORT     41801
+#define TESTNET_PORT 41810
+#define TESTNET_RPC_PORT 41811
 
 extern bool fTestNet;
 

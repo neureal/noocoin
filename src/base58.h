@@ -33,7 +33,7 @@ inline std::string EncodeBase58(const unsigned char* pbegin, const unsigned char
     // Convert big endian data to little endian
     // Extra zero at the end make sure bignum will interpret as a positive number
     std::vector<unsigned char> vchTmp(pend-pbegin+1, 0);
-    reverse_copy(pbegin, pend, vchTmp.begin());
+    std::reverse_copy(pbegin, pend, vchTmp.begin());
 
     // Convert little endian data to bignum
     CBigNum bn;
@@ -60,7 +60,7 @@ inline std::string EncodeBase58(const unsigned char* pbegin, const unsigned char
         str += pszBase58[0];
 
     // Convert little endian std::string to big endian
-    reverse(str.begin(), str.end());
+    std::reverse(str.begin(), str.end());
     return str;
 }
 
@@ -114,7 +114,7 @@ inline bool DecodeBase58(const char* psz, std::vector<unsigned char>& vchRet)
     vchRet.assign(nLeadingZeros + vchTmp.size(), 0);
 
     // Convert little endian data to big endian
-    reverse_copy(vchTmp.begin(), vchTmp.end(), vchRet.end() - vchTmp.size());
+    std::reverse_copy(vchTmp.begin(), vchTmp.end(), vchRet.end() - vchTmp.size());
     return true;
 }
 
@@ -264,8 +264,8 @@ class CBitcoinAddress : public CBase58Data
 public:
     enum
     {
-        PUBKEY_ADDRESS = 55,  // noocoin: addresses begin with 'P'
-        SCRIPT_ADDRESS = 117, // noocoin: addresses begin with 'p'
+        PUBKEY_ADDRESS = 114,  // noocoin: addresses begin with 'n or o'
+        SCRIPT_ADDRESS = 53, // noocoin: addresses begin with 'N'
         PUBKEY_ADDRESS_TEST = 111,
         SCRIPT_ADDRESS_TEST = 196,
     };
