@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2011-2013 The PPCoin developers
+// Copyright (c) 2014-2014 The Noocoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -32,8 +33,8 @@ unsigned int nTransactionsUpdated = 0;
 map<uint256, CBlockIndex*> mapBlockIndex;
 set<pair<COutPoint, unsigned int> > setStakeSeen;
 uint256 hashGenesisBlock = hashGenesisBlockOfficial;
-static CBigNum bnProofOfWorkLimit(~uint256(0) >> 32);
-static CBigNum bnInitialHashTarget(~uint256(0) >> 40);
+static CBigNum bnProofOfWorkLimit(~uint256(0) >> 24);
+static CBigNum bnInitialHashTarget(~uint256(0) >> 28);
 unsigned int nStakeMinAge = STAKE_MIN_AGE;
 int nCoinbaseMaturity = COINBASE_MATURITY_NOO;
 CBlockIndex* pindexGenesisBlock = NULL;
@@ -2230,10 +2231,10 @@ bool LoadBlockIndex(bool fAllowNew)
     if (fTestNet)
     {
         hashGenesisBlock = hashGenesisBlockTestNet;
-        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 28);
-        nStakeMinAge = 60 * 60 * 24; // test net min age is 1 day
+        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 16);
+        nStakeMinAge = 60 * 5; // test net min age is 5 minutes
         nCoinbaseMaturity = 60;
-        bnInitialHashTarget = CBigNum(~uint256(0) >> 29);
+        bnInitialHashTarget = CBigNum(~uint256(0) >> 20);
         nModifierInterval = 60 * 20; // test net modifier interval is 20 minutes
     }
 
@@ -2256,15 +2257,23 @@ bool LoadBlockIndex(bool fAllowNew)
         if (!fAllowNew)
             return false;
 
-        // Genesis Block:
-        // CBlock(hash=000000000019d6, ver=1, hashPrevBlock=00000000000000, hashMerkleRoot=4a5e1e, nTime=1231006505, nBits=1d00ffff, nNonce=2083236893, vtx=1)
-        //   CTransaction(hash=4a5e1e, ver=1, vin.size=1, vout.size=1, nLockTime=0)
-        //     CTxIn(COutPoint(000000, -1), coinbase 04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73)
-        //     CTxOut(nValue=50.00000000, scriptPubKey=0x5F1DF16B2B704C8A578D0B)
-        //   vMerkleTree: 4a5e1e
+        // Genesis Block Official:
+		//CBlock(hash=0000003972ba3a119979, ver=1, hashPrevBlock=00000000000000000000, hashMerkleRoot=41652a17e5, nTime=1397612300, nBits=1e00ffff, nNonce=6662358, vtx=1, vchBlockSig=)
+		//  Coinbase(hash=41652a17e5, nTime=1397612291, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+		//    CTxIn(COutPoint(0000000000, -1), coinbase 04ffff001d020f27454b61726c204772657920417072696c2031352c2032303134204b6965736572205265706f727420537461747565206f6620526573706f6e736962696c697479205574616821)
+		//    CTxOut(empty)
+		//  vMerkleTree: 41652a17e5
+		
+        // Genesis Block TestNet:
+		//CBlock(hash=0000fa57200ecf25173c, ver=1, hashPrevBlock=00000000000000000000, hashMerkleRoot=41652a17e5, nTime=1397613000, nBits=1f00ffff, nNonce=5115, vtx=1, vchBlockSig=)
+		//  Coinbase(hash=41652a17e5, nTime=1397612291, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+		//    CTxIn(COutPoint(0000000000, -1), coinbase 04ffff001d020f27454b61726c204772657920417072696c2031352c2032303134204b6965736572205265706f727420537461747565206f6620526573706f6e736962696c697479205574616821)
+		//    CTxOut(empty)
+		//  vMerkleTree: 41652a17e5
+		
 
         // Genesis block
-        const char* pszTimestamp = "Matonis 07-AUG-2012 Parallel Currencies And The Roadmap To Monetary Freedom";
+        const char* pszTimestamp = "Karl Grey April 15, 2014 Kieser Report Statue of Responsibility Utah!";
         CTransaction txNew;
         txNew.nTime = 1397612291;
         txNew.vin.resize(1);
@@ -2278,20 +2287,30 @@ bool LoadBlockIndex(bool fAllowNew)
         block.nVersion = 1;
         block.nTime    = 1397612300;
         block.nBits    = bnProofOfWorkLimit.GetCompact();
-        block.nNonce   = 2179302059u;
+        block.nNonce   = 6662358u;
 
         if (fTestNet)
         {
             block.nTime    = 1397613000;
-            block.nNonce   = 122894938u;
+            block.nNonce   = 5115u;
         }
-
+		
+//		//// find Genesis Block nonce
+//		CBigNum bnTarget;
+//        bnTarget.SetCompact(block.nBits);
+//        while (block.GetHash() > bnTarget.getuint256())
+//        {
+//            if (fRequestShutdown) return false;
+//            if (block.nNonce % 1048576 == 0) printf("n=%dM hash=%s\n", block.nNonce / 1048576, block.GetHash().ToString().c_str());
+//            block.nNonce++;
+//        }
+		
         //// debug print
         printf("%s\n", block.GetHash().ToString().c_str());
         printf("%s\n", hashGenesisBlock.ToString().c_str());
         printf("%s\n", block.hashMerkleRoot.ToString().c_str());
-        assert(block.hashMerkleRoot == uint256("0x3c2d8f85fab4d17aac558cc648a1a58acff0de6deb890c29985690052c5993c2"));
         block.print();
+        assert(block.hashMerkleRoot == uint256("0x41652a17e5a83cb3d56a7d4abfbc35c12f88aa3ccdcdcdf88302e74d9e7474aa"));
         assert(block.GetHash() == hashGenesisBlock);
         assert(block.CheckBlock());
 

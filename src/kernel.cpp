@@ -10,8 +10,8 @@
 using namespace std;
 
 // Protocol switch time of v0.3 kernel protocol
-unsigned int nProtocolV03SwitchTime     = 1363800000;
-unsigned int nProtocolV03TestSwitchTime = 1359781000;
+unsigned int nProtocolV03SwitchTime     = 1397692800;
+unsigned int nProtocolV03TestSwitchTime = 1397692800;
 // Protocol switch time of v0.4 kernel protocol
 unsigned int nProtocolV04SwitchTime     = 1399300000;
 unsigned int nProtocolV04TestSwitchTime = 1395700000;
@@ -30,9 +30,9 @@ unsigned int nModifierInterval = MODIFIER_INTERVAL;
 static std::map<int, unsigned int> mapStakeModifierCheckpoints =
     boost::assign::map_list_of
     ( 0, 0x0e00670bu )
-    ( 19080, 0xad4e4d29u )
-    ( 30583, 0xdc7bf136u )
-    ( 99999, 0xf555cfd2u )
+    //( 19080, 0xad4e4d29u )
+    //( 30583, 0xdc7bf136u )
+    //( 99999, 0xf555cfd2u )
     ;
 
 // Whether the given coinstake is subject to new v0.3 protocol
