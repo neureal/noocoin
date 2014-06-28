@@ -967,7 +967,7 @@ public:
 
     bool IsProofOfWork() const
     {
-        return !IsProofOfStake();
+		return true;
     }
 
     std::pair<COutPoint, unsigned int> GetProofOfStake() const
