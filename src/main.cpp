@@ -867,6 +867,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge)
     if (fDebug && GetBoolArg("-printcreation"))
         printf("GetProofOfStakeReward(): create=%s nCoinAge=%"PRI64d"\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
     return nSubsidy;
+	//return 0;
 }
 
 static const int64 nTargetTimespan = 7 * 24 * 60 * 60;  // one week

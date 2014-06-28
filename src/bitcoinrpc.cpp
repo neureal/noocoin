@@ -441,8 +441,10 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("protocolversion",(int)PROTOCOL_VERSION));
     obj.push_back(Pair("walletversion", pwalletMain->GetVersion()));
     obj.push_back(Pair("balance",       ValueFromAmount(pwalletMain->GetBalance())));
+    obj.push_back(Pair("unconfirmed",   ValueFromAmount(pwalletMain->GetUnconfirmedBalance())));
     obj.push_back(Pair("newmint",       ValueFromAmount(pwalletMain->GetNewMint())));
     obj.push_back(Pair("stake",         ValueFromAmount(pwalletMain->GetStake())));
+    obj.push_back(Pair("coinage",       ValueFromAmount(pwalletMain->GetCoinageAvailable())));
     obj.push_back(Pair("blocks",        (int)nBestHeight));
     obj.push_back(Pair("moneysupply",   ValueFromAmount(pindexBest->nMoneySupply)));
     obj.push_back(Pair("connections",   (int)vNodes.size()));
@@ -754,6 +756,18 @@ Value verifymessage(const Array& params, bool fHelp)
     return (CBitcoinAddress(key.GetPubKey()) == addr);
 }
 
+Value getcoinage(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 1)
+        throw runtime_error(
+            "getcoinage [account]\n"
+            "If [account] is not specified, returns the server's total curently available coinage.\n"
+            "If [account] is specified, returns the curently available coinage in the account. (TODO)");
+
+    if (params.size() == 0)
+        return ValueFromAmount(pwalletMain->GetCoinageAvailable());
+	return ValueFromAmount(0);
+}
 
 Value getreceivedbyaddress(const Array& params, bool fHelp)
 {
@@ -2470,6 +2484,7 @@ static const CRPCCommand vRPCCommands[] =
     { "walletlock",             &walletlock,             true },
     { "encryptwallet",          &encryptwallet,          false },
     { "validateaddress",        &validateaddress,        true },
+    { "getcoinage",             &getcoinage,             false },
     { "getbalance",             &getbalance,             false },
     { "move",                   &movecmd,                false },
     { "sendfrom",               &sendfrom,               false },

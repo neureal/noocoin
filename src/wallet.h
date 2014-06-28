@@ -146,6 +146,7 @@ public:
     int ScanForWalletTransaction(const uint256& hashTx);
     void ReacceptWalletTransactions();
     void ResendWalletTransactions();
+    int64 GetCoinageAvailable() const;
     int64 GetBalance() const;
     int64 GetUnconfirmedBalance() const;
     int64 GetStake() const;

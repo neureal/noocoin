@@ -852,6 +852,22 @@ void CWallet::ResendWalletTransactions()
 // Actions
 //
 
+int64 CWallet::GetCoinageAvailable() const
+{
+    int64 nTotal = 0;
+    {
+        LOCK(cs_wallet);
+        for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
+        {
+            const CWalletTx* pcoin = &(*it).second;
+            if (!pcoin->IsFinal() || !pcoin->IsConfirmed())
+                continue;
+            nTotal += pcoin->GetAvailableCredit();
+        }
+    }
+
+    return nTotal;
+}
 
 int64 CWallet::GetBalance() const
 {
