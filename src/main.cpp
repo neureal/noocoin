@@ -1858,8 +1858,8 @@ bool CBlock::CheckBlock() const
             return DoS(100, error("CheckBlock() : coinstake in wrong position"));
 
     // noocoin: coinbase output should be empty if proof-of-stake block
-    if (IsProofOfStake() && (vtx[0].vout.size() != 1 || !vtx[0].vout[0].IsEmpty()))
-        return error("CheckBlock() : coinbase output not empty for proof-of-stake block");
+    //if (IsProofOfStake() && (vtx[0].vout.size() != 1 || !vtx[0].vout[0].IsEmpty()))
+    //    return error("CheckBlock() : coinbase output not empty for proof-of-stake block");
 
     // Check coinbase timestamp
     if (GetBlockTime() > (int64)vtx[0].nTime + nMaxClockDrift)
@@ -1869,11 +1869,21 @@ bool CBlock::CheckBlock() const
     if (IsProofOfStake() && !CheckCoinStakeTimestamp(GetBlockTime(), (int64)vtx[1].nTime))
         return DoS(50, error("CheckBlock() : coinstake timestamp violation nTimeBlock=%u nTimeTx=%u", GetBlockTime(), vtx[1].nTime));
 
-    // Check coinbase reward
-    if (vtx[0].GetValueOut() > (IsProofOfWork()? (GetProofOfWorkReward(nBits) - vtx[0].GetMinFee() + MIN_TX_FEE) : 0))
+    // Check total coinbase reward
+    if (vtx[0].GetValueOut() > (GetProofOfWorkReward(nBits) - vtx[0].GetMinFee() + MIN_TX_FEE))
         return DoS(50, error("CheckBlock() : coinbase reward exceeded %s > %s", 
                    FormatMoney(vtx[0].GetValueOut()).c_str(),
-                   FormatMoney(IsProofOfWork()? GetProofOfWorkReward(nBits) : 0).c_str()));
+                   FormatMoney(GetProofOfWorkReward(nBits)).c_str()));
+	
+	//TODO Check coinbase outputs that they are the correct sigs and amounts as PCC
+	if (IsProofOfStake() && vtx[0].GetValueOut() > 0) {
+		//TODO get current saved PCC payouts
+		BOOST_FOREACH(const CTxOut& txout, vtx[0].vout)
+		{
+			//if (txout.scriptPubKey != PCCpubkey && txout.nValue != PCCreward) 
+			//return DoS(100, error("CheckBlock() : coinbase PCC payout not correct"));
+		}
+	}
 
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, vtx)
@@ -3680,7 +3690,11 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfS
                 if (txCoinStake.nTime >= max(pindexPrev->GetMedianTimePast()+1, pindexPrev->GetBlockTime() - nMaxClockDrift))
                 {   // make sure coinstake would meet timestamp protocol
                     // as it would be the same as the block timestamp
-                    pblock->vtx[0].vout[0].SetEmpty();
+                    //pblock->vtx[0].vout[0].SetEmpty();
+					
+					//TODO get PCC, split up reward and add all outputs to coinbase
+					pblock->vtx[0].vout[0].nValue = GetProofOfWorkReward(pblock->nBits);
+					
                     pblock->vtx[0].nTime = txCoinStake.nTime;
                     pblock->vtx.push_back(txCoinStake);
                 }
@@ -3689,9 +3703,9 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfS
             nLastCoinStakeSearchTime = nSearchTime;
         }
     }
-
+	
     pblock->nBits = GetNextTargetRequired(pindexPrev, pblock->IsProofOfStake());
-
+	
     // Collect memory pool transactions into the block
     int64 nFees = 0;
     {
