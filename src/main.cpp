@@ -2257,8 +2257,8 @@ bool LoadBlockIndex(bool fAllowNew)
 //	nCoinbaseMaturity = 12; //number of confirms for PoW
 	
 //	//much faster block creation for testing
-	bnProofOfWorkLimit = CBigNum(~uint256(0) >> 24);//0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-	bnInitialHashTarget = CBigNum(~uint256(0) >> 28);
+//	bnProofOfWorkLimit = CBigNum(~uint256(0) >> 24);//0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+//	bnInitialHashTarget = CBigNum(~uint256(0) >> 28);
 //	nStakeMinAge = 60 * 5; // min age is 5 minutes
 //	nModifierInterval = 20; // modifier interval is 20 seconds
 //	nCoinbaseMaturity = 6; //number of confirms for PoW
@@ -2290,11 +2290,11 @@ bool LoadBlockIndex(bool fAllowNew)
 		//  vMerkleTree: 41652a17e5
 		
         // Genesis Block TestNet:
-		//CBlock(hash=0000fa57200ecf25173c, ver=1, hashPrevBlock=00000000000000000000, hashMerkleRoot=41652a17e5, nTime=1397613000, nBits=1f00ffff, nNonce=5115, vtx=1, vchBlockSig=)
-		//  Coinbase(hash=41652a17e5, nTime=1397612291, ver=1, vin.size=1, vout.size=1, nLockTime=0)
-		//    CTxIn(COutPoint(0000000000, -1), coinbase 04ffff001d020f27454b61726c204772657920417072696c2031352c2032303134204b6965736572205265706f727420537461747565206f6620526573706f6e736962696c697479205574616821)
+		//CBlock(hash=0000000db3cad310a596, ver=1, hashPrevBlock=00000000000000000000, hashMerkleRoot=a17ce4a02c, nTime=1397613000, nBits=1d0fffff, nNonce=783951857, vtx=1, vchBlockSig=)
+		//  Coinbase(hash=a17ce4a02c, nTime=1397612291, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+		//    CTxIn(COutPoint(0000000000, -1), coinbase 04ffff0f1d02f305454b61726c204772657920417072696c2031352c2032303134204b6965736572205265706f727420537461747565206f6620526573706f6e736962696c697479205574616821)
 		//    CTxOut(empty)
-		//  vMerkleTree: 41652a17e5
+		//  vMerkleTree: a17ce4a02c
 		
 
         // Genesis block
@@ -2303,7 +2303,7 @@ bool LoadBlockIndex(bool fAllowNew)
         txNew.nTime = 1397612291;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
-        txNew.vin[0].scriptSig = CScript() << 486604799 << CBigNum(9999) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+        txNew.vin[0].scriptSig = CScript() << 0x1d0fffffu << CBigNum(1523) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
         txNew.vout[0].SetEmpty();
         CBlock block;
         block.vtx.push_back(txNew);
@@ -2317,25 +2317,27 @@ bool LoadBlockIndex(bool fAllowNew)
         if (fTestNet)
         {
             block.nTime    = 1397613000;
-            block.nNonce   = 5115u;
+            block.nNonce   = 783951857u;
         }
 		
-//		//// find Genesis Block nonce
+//		// find Genesis Block nonce
 //		CBigNum bnTarget;
 //        bnTarget.SetCompact(block.nBits);
 //        while (block.GetHash() > bnTarget.getuint256())
 //        {
 //            if (fRequestShutdown) return false;
-//            if (block.nNonce % 1048576 == 0) printf("n=%dM hash=%s\n", block.nNonce / 1048576, block.GetHash().ToString().c_str());
+//            if (block.nNonce % 0x100000u == 0) printf("n=%dM hash=%s\n", block.nNonce / 1048576, block.GetHash().ToString().c_str());
 //            block.nNonce++;
 //        }
+//		uint256 test1 = hashGenesisBlockOfficial; //put block.GetHash() here
+//		uint256 test2 = hashGenesisBlockTestNet; //put block.GetHash() with -testnet here
 		
         //// debug print
         printf("%s\n", block.GetHash().ToString().c_str());
         printf("%s\n", hashGenesisBlock.ToString().c_str());
         printf("%s\n", block.hashMerkleRoot.ToString().c_str());
         block.print();
-        assert(block.hashMerkleRoot == uint256("0x41652a17e5a83cb3d56a7d4abfbc35c12f88aa3ccdcdcdf88302e74d9e7474aa"));
+        assert(block.hashMerkleRoot == uint256("0xa17ce4a02c5bdba75932ef8772702a43bb2d82dd96d98c8dc99ada73570a4388"));
         assert(block.GetHash() == hashGenesisBlock);
         assert(block.CheckBlock());
 
