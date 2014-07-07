@@ -33,8 +33,8 @@ unsigned int nTransactionsUpdated = 0;
 map<uint256, CBlockIndex*> mapBlockIndex;
 set<pair<COutPoint, unsigned int> > setStakeSeen;
 uint256 hashGenesisBlock = hashGenesisBlockOfficial;
-static CBigNum bnProofOfWorkLimit(~uint256(0) >> 24);
-static CBigNum bnInitialHashTarget(~uint256(0) >> 28);
+static CBigNum bnProofOfWorkLimit(~uint256(0) >> 32);
+static CBigNum bnInitialHashTarget(~uint256(0) >> 40);
 unsigned int nStakeMinAge = STAKE_MIN_AGE;
 int nCoinbaseMaturity = COINBASE_MATURITY_NOO;
 CBlockIndex* pindexGenesisBlock = NULL;
@@ -2242,12 +2242,26 @@ bool LoadBlockIndex(bool fAllowNew)
     if (fTestNet)
     {
         hashGenesisBlock = hashGenesisBlockTestNet;
-        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 16);
-        nStakeMinAge = 60 * 5; // test net min age is 5 minutes
+        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 28);
+        nStakeMinAge = 60 * 60 * 24; // test net min age is 1 day
         nCoinbaseMaturity = 60;
-        bnInitialHashTarget = CBigNum(~uint256(0) >> 20);
+        bnInitialHashTarget = CBigNum(~uint256(0) >> 29);
         nModifierInterval = 60 * 20; // test net modifier interval is 20 minutes
     }
+	
+//	//medium speed block creation for testing
+//	bnProofOfWorkLimit = CBigNum(~uint256(0) >> 30);
+//	bnInitialHashTarget = CBigNum(~uint256(0) >> 32);
+//	nStakeMinAge = 60 * 15; // min age is 15 minutes
+//	nModifierInterval = 60 * 5; // modifier interval is 5 minute
+//	nCoinbaseMaturity = 12; //number of confirms for PoW
+	
+//	//much faster block creation for testing
+	bnProofOfWorkLimit = CBigNum(~uint256(0) >> 24);//0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+	bnInitialHashTarget = CBigNum(~uint256(0) >> 28);
+//	nStakeMinAge = 60 * 5; // min age is 5 minutes
+//	nModifierInterval = 20; // modifier interval is 20 seconds
+//	nCoinbaseMaturity = 6; //number of confirms for PoW
 
     printf("%s Network: genesis=0x%s nBitsLimit=0x%08x nBitsInitial=0x%08x nStakeMinAge=%d nCoinbaseMaturity=%d nModifierInterval=%d\n",
            fTestNet? "Test" : "Noocoin", hashGenesisBlock.ToString().substr(0, 20).c_str(), bnProofOfWorkLimit.GetCompact(), bnInitialHashTarget.GetCompact(), nStakeMinAge, nCoinbaseMaturity, nModifierInterval);
