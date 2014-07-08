@@ -2243,7 +2243,7 @@ bool LoadBlockIndex(bool fAllowNew)
     {
         hashGenesisBlock = hashGenesisBlockTestNet;
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 28);
-        nStakeMinAge = 60 * 60 * 24; // test net min age is 1 day
+        nStakeMinAge = 60 * 60 * 1; // test net min age is 1 hour
         nCoinbaseMaturity = 60;
         bnInitialHashTarget = CBigNum(~uint256(0) >> 29);
         nModifierInterval = 60 * 20; // test net modifier interval is 20 minutes
@@ -2251,17 +2251,17 @@ bool LoadBlockIndex(bool fAllowNew)
 	
 //	//medium speed block creation for testing
 //	bnProofOfWorkLimit = CBigNum(~uint256(0) >> 30);
-//	bnInitialHashTarget = CBigNum(~uint256(0) >> 32);
 //	nStakeMinAge = 60 * 15; // min age is 15 minutes
-//	nModifierInterval = 60 * 5; // modifier interval is 5 minute
 //	nCoinbaseMaturity = 12; //number of confirms for PoW
+//	bnInitialHashTarget = CBigNum(~uint256(0) >> 32);
+//	nModifierInterval = 60 * 5; // modifier interval is 5 minute
 	
 //	//much faster block creation for testing
 //	bnProofOfWorkLimit = CBigNum(~uint256(0) >> 24);//0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-//	bnInitialHashTarget = CBigNum(~uint256(0) >> 28);
 //	nStakeMinAge = 60 * 5; // min age is 5 minutes
-//	nModifierInterval = 20; // modifier interval is 20 seconds
 //	nCoinbaseMaturity = 6; //number of confirms for PoW
+//	bnInitialHashTarget = CBigNum(~uint256(0) >> 28);
+//	nModifierInterval = 20; // modifier interval is 20 seconds
 
     printf("%s Network: genesis=0x%s nBitsLimit=0x%08x nBitsInitial=0x%08x nStakeMinAge=%d nCoinbaseMaturity=%d nModifierInterval=%d\n",
            fTestNet? "Test" : "Noocoin", hashGenesisBlock.ToString().substr(0, 20).c_str(), bnProofOfWorkLimit.GetCompact(), bnInitialHashTarget.GetCompact(), nStakeMinAge, nCoinbaseMaturity, nModifierInterval);
@@ -2305,6 +2305,8 @@ bool LoadBlockIndex(bool fAllowNew)
         txNew.vout.resize(1);
         txNew.vin[0].scriptSig = CScript() << 0x1d0fffffu << CBigNum(1523) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
         txNew.vout[0].SetEmpty();
+		//txNew.vout[0].nValue = 5000000000; //50 coin
+		//txNew.vout[0].scriptPubKey << 0xffff... << OP_CHECKSIG;
         CBlock block;
         block.vtx.push_back(txNew);
         block.hashPrevBlock = 0;
