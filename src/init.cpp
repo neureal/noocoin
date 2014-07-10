@@ -264,6 +264,7 @@ bool AppInit2(int argc, char* argv[])
         return false;
     }
 
+    SoftSetBoolArg("-testnet", true); //TODO force default testnet for now
     fTestNet = GetBoolArg("-testnet");
     if (fTestNet)
     {
