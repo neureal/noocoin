@@ -400,9 +400,12 @@ public:
     std::string ToString() const
     {
         if (IsEmpty()) return "CTxOut(empty)";
-        if (scriptPubKey.size() < 6)
+        if (scriptPubKey.size() < 1) //TODO raise to max (was 6)
             return "CTxOut(error)";
-        return strprintf("CTxOut(nValue=%s, scriptPubKey=%s)", FormatMoney(nValue).c_str(), scriptPubKey.ToString().c_str());
+        txnouttype whichType;
+		std::vector<valtype> vSolutions;
+		Solver(scriptPubKey, whichType, vSolutions);
+        return strprintf("CTxOut(type=%s, nValue=%s, scriptPubKey=%s)", GetTxnOutputType(whichType), FormatMoney(nValue).c_str(), scriptPubKey.ToString().c_str());
     }
 
     void print() const
@@ -529,6 +532,13 @@ public:
     {
         // noocoin: the coin stake transaction is marked with the first output empty
         return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() >= 2 && vout[0].IsEmpty());
+    }
+	
+    bool IsCoinAge() const
+    {
+        // noocoin: is this one of the new coinage payment transactions that have a data payload?
+		//TODO check for coinage payment back to self, second output key matches first input key
+        return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() == 2 && vout[0].nValue == 0 && vout[1].nValue > MIN_TXOUT_AMOUNT);
     }
 
     /** Check for standard transaction types
@@ -689,7 +699,7 @@ public:
     std::string ToString() const
     {
         std::string str;
-        str += IsCoinBase()? "Coinbase" : (IsCoinStake()? "Coinstake" : "CTransaction");
+        str += IsCoinBase()? "Coinbase" : (IsCoinStake()? "Coinstake" : (IsCoinAge()? "Coinage" : "CTransaction"));
         str += strprintf("(hash=%s, nTime=%d, ver=%d, vin.size=%d, vout.size=%d, nLockTime=%d)\n",
             GetHash().ToString().substr(0,10).c_str(),
             nTime,

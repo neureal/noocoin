@@ -756,6 +756,350 @@ Value verifymessage(const Array& params, bool fHelp)
     return (CBitcoinAddress(key.GetPubKey()) == addr);
 }
 
+// A pure coinage spend transaction with burnt fees
+// First input scriptPubKeyHash matches single output
+Value submitvote(const Array& params, bool fHelp)
+{
+    if (pwalletMain->IsCrypted() && (fHelp || params.size() != 3))
+        throw runtime_error(
+            "submitvote <payment curve> <tick count> <api-id>\n"
+            "Creates a coinage spend transaction associated with an api and a future tick-index payment curve.\n"
+            "<api-id> is a string url(uri?)\n"
+            "<payment curve> is currently just a real and is rounded to the nearest 0.000001\n"
+            "<tick count> the number of ticks into the future (from this transaction timestamp) that this payment is good for\n"
+            "requires wallet passphrase to be set with walletpassphrase first");
+    if (!pwalletMain->IsCrypted() && (fHelp || params.size() != 3))
+        throw runtime_error(
+            "submitvote <payment curve> <tick count> <api-id>\n"
+            "Creates a coinage spend transaction associated with an api and a future tick-index payment curve.\n"
+            "<api-id> is a string url(uri?)\n"
+            "<payment curve> is currently just a real and is rounded to the nearest 0.000001\n"
+            "<tick count> the number of ticks into the future (from this transaction timestamp) that this payment is good for");
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+    //if (fWalletUnlockMintOnly) //not needed, we are only spending coinage. maybe check makes sense if only minting
+    //    throw JSONRPCError(-13, "Error: Wallet unlocked for block minting only.");
+	
+	
+	//TODO add API expected data type, api_type
+	//timestamp (little endian, unsigned, int64) for now
+	
+	
+    // payment curve
+    int64 nAmount = AmountFromValue(params[0]);
+    if (nAmount < MIN_TXOUT_AMOUNT)
+        throw JSONRPCError(-101, "Payment amount too small");
+    //if (nAmount > pwalletMain->GetBalance()) //not needed, will spend the maximum if over balance
+    //    throw JSONRPCError(-6, "Account has insufficient funds");
+	
+	// tick count
+    int64 nTickCount = params[1].get_int64();
+	
+	// api-id
+    if (params[2].type() == null_type || params[2].get_str().empty())
+        throw JSONRPCError(-200, "API is empty");
+    if (params[2].get_str().size() > 2083)
+        throw JSONRPCError(-201, "API is too long");
+	string strApi = params[2].get_str();
+	
+	
+	//***testing
+	//printf("*****test[%s]\n",CBigNum(~uint256(0) >> 24).GetHex().c_str());
+//    int64 nTime;
+//    nTime = GetTime();
+//	printf("*****GetTime[%s]\n",CBigNum(nTime).ToString().c_str());
+//	printf("*****GetTime[%s]\n",CBigNum(nTime).GetHex().c_str());
+//	printf("*****GetTimS[%s]\n",CBigNum(nTime >> 5).GetHex().c_str());
+//	string test = "this is a test";
+//	return test;
+	
+	
+    // Wallet
+    CWalletTx wtx;
+    //string strError = pwalletMain->CreateCoinStake("", nAmount, wtx);
+    //string strError = pwalletMain->CreateTransaction("", nAmount, wtx);
+    //string strError = pwalletMain->SendMoneyToBitcoinAddress("", nAmount, wtx);
+    //if (strError != "")
+    //    throw JSONRPCError(-4, strError);
+
+//    vector<pair<CScript, int64> > vecSend;
+//	CScript scriptPubKey;
+//	//bool test = scriptPubKey.empty();
+//	//scriptPubKey.clear();
+//    vecSend.push_back(make_pair(scriptPubKey, nAmount));
+//    CReserveKey keyChange(pwalletMain);
+
+	
+	// Mark PAPI transaction and data
+	//CScript() << vector<unsigned char>(json_str.begin(), json_str.end())
+	//CScript() << OP_PUBKEY << OP_CHECKSIG
+	//(CScript() << pblock->nTime << CBigNum(nExtraNonce)) + COINBASE_FLAGS; //coinbase input
+	//CScript() << reservekey.GetReservedKey() << OP_CHECKSIG; //coinbase output
+	//CScript() << OP_HASH160 << address.GetHash160() << OP_EQUAL; //script
+	//CScript() << OP_DUP << OP_HASH160 << address.GetHash160() << OP_EQUALVERIFY << OP_CHECKSIG; //script hash
+
+	//vector<unsigned char> v(strApi.begin(), strApi.end());
+	//string str(v.begin(),v.end());
+
+	//(CScript() << OP_RETURN); //prunable
+	//(CScript() << OP_RETURN << CBigNum(nTickCount) << vector<unsigned char>(strApi.begin(), strApi.end()))
+    CScript csPAPI;
+	csPAPI << OP_RETURN << CBigNum(nTickCount) << vector<unsigned char>(strApi.begin(), strApi.end());
+	
+    // Send
+    int64 nFeeRequired = 0;
+    bool fCreated = pwalletMain->CreateCoinageTransaction(csPAPI, nAmount, wtx, nFeeRequired);
+    if (!fCreated)
+    {
+        //if (totalAmount + nFeeRequired > pwalletMain->GetBalance())
+        //    throw JSONRPCError(-6, "Insufficient funds");
+        throw JSONRPCError(-4, "Transaction creation failed");
+    }
+	
+	CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
+    if (!pwalletMain->CommitTransaction(wtx, keyChange))
+        throw JSONRPCError(-4, "Transaction commit failed");
+
+    return wtx.GetHash().GetHex();
+}
+
+Value submitwork(const Array& params, bool fHelp)
+{
+    if (pwalletMain->IsCrypted() && (fHelp || params.size() != 4))
+        throw runtime_error(
+            "submitwork <payment> <tick-index> <hex data> <api-id>\n"
+            "Creates a coinage spend transaction associated with canidate work data for a specific api and tick.\n"
+            "<payment> is a real and is rounded to the nearest 0.000001\n"
+            "requires wallet passphrase to be set with walletpassphrase first");
+    if (!pwalletMain->IsCrypted() && (fHelp || params.size() != 4))
+        throw runtime_error(
+            "submitwork <payment> <tick-index> <hex data> <api-id>\n"
+            "Creates a coinage spend transaction associated with canidate work data for a specific api and tick.\n"
+            "<amount> is a real and is rounded to the nearest 0.000001");
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+	
+    // payment
+    int64 nAmount = AmountFromValue(params[0]);
+    if (nAmount < MIN_TXOUT_AMOUNT)
+        throw JSONRPCError(-101, "Payment amount too small");
+
+	// tick-index
+    int64 pnTickIdx = params[1].get_int64();
+	
+	// api-id
+    if (params[3].type() == null_type || params[3].get_str().empty())
+        throw JSONRPCError(-200, "API is empty");
+    if (params[3].get_str().size() > 2083)
+        throw JSONRPCError(-201, "API is too long");
+	string strApi = params[3].get_str();
+	
+	// data
+    vector<unsigned char> vchData(ParseHex(params[2].get_str()));
+	if (vchData.empty())
+		throw JSONRPCError(-202, "No data");
+	if (vchData.size() > 0xFFu)
+		throw JSONRPCError(-203, "Data too large");
+	
+//	//***data read testing
+//    // Convert big endian data to little endian
+//    // Extra zero at the end make sure bignum will interpret as a positive number
+//    std::vector<unsigned char> vchTmp(vchData.size()+1, 0);
+//    //std::vector<unsigned char> vchTmp(vchData.size(), 0); //no diff for 4 byte at least
+//    std::reverse_copy(vchData.begin(), vchData.end(), vchTmp.begin());
+//    // Convert little endian data to bignum
+//    CBigNum bn;
+//    bn.setvch(vchTmp);
+//	printf("*****test CBigNumX[%d]\n", bn.getuint64());
+//	
+//	//int64 timestamp = params[2].get_int64();
+//	//unsigned int testuint = CBigNum(vchData).getuint();
+//	printf("*****test CBigNumLittleEnd[%d]\n", CBigNum(vchData).getuint64()); //doesn't work
+//    std::reverse(vchData.begin(), vchData.end());
+//	printf("*****test CBigNumBigEnd[%d]\n", CBigNum(vchData).getuint64()); //works
+//	printf("*****test HexStr[%s]\n", HexStr(vchData.begin(), vchData.end(), true).c_str());
+//	
+//	return "got it";
+	
+    // Wallet
+    CWalletTx wtx;
+
+    CScript csMPE;
+	csMPE << OP_RETURN << CBigNum(pnTickIdx) << vchData << vector<unsigned char>(strApi.begin(), strApi.end());
+	
+    // Send
+    int64 nFeeRequired = 0;
+    bool fCreated = pwalletMain->CreateCoinageTransaction(csMPE, nAmount, wtx, nFeeRequired);
+    if (!fCreated)
+    {
+        //if (totalAmount + nFeeRequired > pwalletMain->GetBalance())
+        //    throw JSONRPCError(-6, "Insufficient funds");
+        throw JSONRPCError(-4, "Transaction creation failed");
+    }
+	
+	CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
+    if (!pwalletMain->CommitTransaction(wtx, keyChange))
+        throw JSONRPCError(-4, "Transaction commit failed");
+
+    return wtx.GetHash().GetHex();
+}
+
+Value listapis(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "listapis\n"
+            "Get candidate API ticks and coinage spent on each.\n"
+            "Returns list of api-id,tick-index and total coinage currently spent");
+	
+//            "listsinceblock [blockhash] [target-confirmations]\n"
+//            "Get all transactions in blocks since block [blockhash], or all transactions if omitted");
+
+    CBlockIndex *pindex = NULL;
+    int target_confirms = 1;
+
+//    if (params.size() > 0)
+//    {
+//        uint256 blockId = 0;
+//
+//        blockId.SetHex(params[0].get_str());
+//        pindex = CBlockLocator(blockId).GetBlockIndex();
+//    }
+//
+//    if (params.size() > 1)
+//    {
+//        target_confirms = params[1].get_int();
+//
+//        if (target_confirms < 1)
+//            throw JSONRPCError(-8, "Invalid parameter");
+//    }
+
+    int depth = pindex ? (1 + nBestHeight - pindex->nHeight) : -1;
+
+    Array transactions;
+
+    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); it++)
+    {
+        CWalletTx tx = (*it).second;
+
+        //if (depth == -1 || tx.GetDepthInMainChain() < depth)
+        //    ListTransactions(tx, "*", 0, true, transactions);
+    }
+
+    uint256 lastblock;
+
+    if (target_confirms == 1)
+    {
+        lastblock = hashBestChain;
+    }
+    else
+    {
+        int target_height = pindexBest->nHeight + 1 - target_confirms;
+
+        CBlockIndex *block;
+        for (block = pindexBest;
+             block && block->nHeight > target_height;
+             block = block->pprev)  { }
+
+        lastblock = block ? block->GetBlockHash() : 0;
+    }
+
+    Object ret;
+    ret.push_back(Pair("transactions", transactions));
+    ret.push_back(Pair("lastblock", lastblock.GetHex()));
+
+    return ret;
+}
+
+
+Value listwinners(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "listwinners <api-id>\n"
+            "Get future prediction data and stats from PCC winners of specified API.\n"
+            "Returns all MPE transactions of PCC winners of specified api-id where ticks are in the future.");
+	
+//            "listsinceblock [blockhash] [target-confirmations]\n"
+//            "Get all transactions in blocks since block [blockhash], or all transactions if omitted");
+
+	
+//    Array winners;
+//	
+//	//loop through PCC to get the winners pubkeyhashes
+//	//for each winner, get future prediction transactions
+//	Object entry;
+//	entry.push_back(Pair("winner", strSentAccount));
+//	entry.push_back(Pair("transactions", s.first.ToString()));
+//	entry.push_back(Pair("category", "send"));
+//	entry.push_back(Pair("amount", ValueFromAmount(-s.second)));
+//	entry.push_back(Pair("fee", ValueFromAmount(-nFee)));
+//	
+//    winners.push_back(entry);
+//
+//    Object ret;
+//    ret.push_back(Pair("winners", winners));
+	
+	
+    CBlockIndex *pindex = NULL;
+    int target_confirms = 1;
+
+//    if (params.size() > 0)
+//    {
+//        uint256 blockId = 0;
+//
+//        blockId.SetHex(params[0].get_str());
+//        pindex = CBlockLocator(blockId).GetBlockIndex();
+//    }
+//
+//    if (params.size() > 1)
+//    {
+//        target_confirms = params[1].get_int();
+//
+//        if (target_confirms < 1)
+//            throw JSONRPCError(-8, "Invalid parameter");
+//    }
+
+    int depth = pindex ? (1 + nBestHeight - pindex->nHeight) : -1;
+
+    Array transactions;
+
+    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); it++)
+    {
+        CWalletTx tx = (*it).second;
+
+        //if (depth == -1 || tx.GetDepthInMainChain() < depth)
+        //    ListTransactions(tx, "*", 0, true, transactions);
+    }
+
+    uint256 lastblock;
+
+    if (target_confirms == 1)
+    {
+        lastblock = hashBestChain;
+    }
+    else
+    {
+        int target_height = pindexBest->nHeight + 1 - target_confirms;
+
+        CBlockIndex *block;
+        for (block = pindexBest;
+             block && block->nHeight > target_height;
+             block = block->pprev)  { }
+
+        lastblock = block ? block->GetBlockHash() : 0;
+    }
+
+    Object ret;
+    ret.push_back(Pair("transactions", transactions));
+    ret.push_back(Pair("lastblock", lastblock.GetHex()));
+
+    return ret;
+}
+
+
 Value getcoinage(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
@@ -2454,6 +2798,10 @@ Value sendalert(const Array& params, bool fHelp)
 static const CRPCCommand vRPCCommands[] =
 { //  name                      function                 safe mode?
   //  ------------------------  -----------------------  ----------
+    { "listapis",               &listapis,               false },
+    { "listwinners",            &listwinners,            false },
+    { "submitvote",             &submitvote,             false },
+    { "submitwork",             &submitwork,             false },
     { "help",                   &help,                   true },
     { "stop",                   &stop,                   true },
     { "getblockcount",          &getblockcount,          true },
@@ -3097,6 +3445,10 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     //
     // Special case non-string parameter types
     //
+    if (strMethod == "submitvote"             && n > 0) ConvertTo<double>(params[0]); //<payment curve>
+    if (strMethod == "submitvote"             && n > 1) ConvertTo<boost::int64_t>(params[1]); //<tick count>
+    if (strMethod == "submitwork"             && n > 0) ConvertTo<double>(params[0]); //<payment>
+    if (strMethod == "submitwork"             && n > 1) ConvertTo<boost::int64_t>(params[1]); //<future tick-index>
     if (strMethod == "setgenerate"            && n > 0) ConvertTo<bool>(params[0]);
     if (strMethod == "setgenerate"            && n > 1) ConvertTo<boost::int64_t>(params[1]);
     if (strMethod == "sendtoaddress"          && n > 1) ConvertTo<double>(params[1]);

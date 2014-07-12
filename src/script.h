@@ -36,6 +36,12 @@ enum txnouttype
     TX_PUBKEYHASH,
     TX_SCRIPTHASH,
     TX_MULTISIG,
+	TX_NULL_DATA,
+    TX_PAPI,
+    TX_TAPI,
+    TX_MPE,
+    TX_DPO,
+    TX_DPP,
 };
 
 const char* GetTxnOutputType(txnouttype t);
@@ -178,6 +184,11 @@ enum opcodetype
 
 
     // template matching params
+    OP_ID = 0xf5,
+    OP_API = 0xf6,
+    OP_INT64 = 0xf7,
+    OP_DATA = 0xf8,
+    OP_SMALLDATA = 0xf9,
     OP_SMALLINTEGER = 0xfa,
     OP_PUBKEYS = 0xfb,
     OP_PUBKEYHASH = 0xfd,
@@ -192,9 +203,9 @@ const char* GetOpName(opcodetype opcode);
 
 inline std::string ValueString(const std::vector<unsigned char>& vch)
 {
-    if (vch.size() <= 4)
-        return strprintf("%d", CBigNum(vch).getint());
-    else
+    //if (vch.size() <= 4)
+    //    return strprintf("%d", CBigNum(vch).getint());
+    //else
         return HexStr(vch);
 }
 

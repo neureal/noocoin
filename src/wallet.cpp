@@ -363,7 +363,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
             if (!wtx.WriteToDisk())
                 return false;
 #ifndef QT_GUI
-        // If default receiving address gets used, replace it with a new one
+        // If default receiving address gets used, replace it with a new one 
         CScript scriptDefaultKey;
         scriptDefaultKey.SetBitcoinAddress(vchDefaultKey);
         BOOST_FOREACH(const CTxOut& txout, wtx.vout)
@@ -1413,6 +1413,110 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     }
 
     // Successfully generated coinstake
+    return true;
+}
+
+// Create a transaction with the first output as data carrier and the second output as a pay-to-self coinage spend
+bool CWallet::CreateCoinageTransaction(const CScript& csData, int64 nValue, CWalletTx& wtxNew, int64& nFeeRet)
+{
+    if (nValue < 0)
+        return false;
+
+    wtxNew.BindWallet(this);
+
+    {
+        LOCK2(cs_main, cs_wallet);
+        // txdb must be opened before the mapWallet lock
+        CTxDB txdb("r");
+        {
+            nFeeRet = nTransactionFee;
+            loop
+            {
+                wtxNew.vin.clear();
+				wtxNew.vout.clear();
+				wtxNew.fFromMe = true;
+				
+				wtxNew.vout.push_back(CTxOut(0, csData)); //this will burn coins if a value > 0 is put in
+				
+                int64 nTotalValue = nValue + nFeeRet;
+                double dPriority = 0;
+
+                // Choose coins to use
+                set<pair<const CWalletTx*,unsigned int> > setCoins;
+                int64 nValueIn = 0;
+                if (!SelectCoins(nTotalValue, wtxNew.nTime, setCoins, nValueIn))
+                    return false;
+				
+				//create coinage (pay-to-self) output using scriptPubKey from the first input coin transaction
+                CScript scriptChange;
+				bool first = true;
+                BOOST_FOREACH(PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins)
+                {
+                    int64 nCredit = pcoin.first->vout[pcoin.second].nValue;
+                    dPriority += (double)nCredit * pcoin.first->GetDepthInMainChain();
+                    if (first) {
+						first = false;
+						scriptChange = pcoin.first->vout[pcoin.second].scriptPubKey;
+					}
+                }
+
+                int64 nChange = nValueIn - nFeeRet;
+//                // if sub-cent change is required, the fee must be raised to at least MIN_TX_FEE
+//                // or until nChange becomes zero
+//                // NOTE: this depends on the exact behaviour of GetMinFee
+//                if (nFeeRet < MIN_TX_FEE && nChange > 0 && nChange < CENT)
+//                {
+//                    int64 nMoveToFee = min(nChange, MIN_TX_FEE - nFeeRet);
+//                    nChange -= nMoveToFee;
+//                    nFeeRet += nMoveToFee;
+//                }
+//
+//                // noocoin: sub-cent change is moved to fee
+//                if (nChange > 0 && nChange < MIN_TXOUT_AMOUNT)
+//                {
+//                    nFeeRet += nChange;
+//                    nChange = 0;
+//                }
+
+                if (nChange <= 0) return false;
+				wtxNew.vout.push_back(CTxOut(nChange, scriptChange));
+
+                // Fill vin
+                BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
+                    wtxNew.vin.push_back(CTxIn(coin.first->GetHash(),coin.second));
+
+                // Sign
+                int nIn = 0;
+                BOOST_FOREACH(const PAIRTYPE(const CWalletTx*,unsigned int)& coin, setCoins)
+                    if (!SignSignature(*this, *coin.first, wtxNew, nIn++))
+                        return false;
+
+                // Limit size
+                unsigned int nBytes = ::GetSerializeSize(*(CTransaction*)&wtxNew, SER_NETWORK, PROTOCOL_VERSION);
+                if (nBytes >= MAX_BLOCK_SIZE_GEN/5)
+                    return false;
+                dPriority /= nBytes;
+
+                // Check that enough fee is included
+                int64 nPayFee = nTransactionFee * (1 + (int64)nBytes / 1000);
+                int64 nMinFee = wtxNew.GetMinFee(1, false, GMF_SEND);
+                if (nFeeRet < max(nPayFee, nMinFee))
+                {
+                    nFeeRet = max(nPayFee, nMinFee);
+                    continue;
+                }
+
+                // Fill vtxPrev by copying from previous transactions vtxPrev
+                wtxNew.AddSupportingTransactions(txdb);
+                wtxNew.fTimeReceivedIsTxTime = true;
+				
+				
+				printf("Coinage Transaction Created: requested=%s amount=%s fees=%s\n", FormatMoney(nValue).c_str(), FormatMoney(nChange).c_str(), FormatMoney(nFeeRet).c_str());
+
+                break;
+            }
+        }
+    }
     return true;
 }
 

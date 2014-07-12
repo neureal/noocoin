@@ -123,6 +123,7 @@ void static SyncWithWallets(const CTransaction& tx, const CBlock* pblock = NULL,
     if (!fConnect)
     {
         // noocoin: wallets need to refund inputs when disconnecting coinstake
+        //if (tx.IsCoinStake() || tx.IsCoinAge()) //TODO possibly add
         if (tx.IsCoinStake())
         {
             BOOST_FOREACH(CWallet* pwallet, setpwalletRegistered)
@@ -462,7 +463,7 @@ bool CTransaction::CheckTransaction() const
         if (txout.IsEmpty() && (!IsCoinBase()) && (!IsCoinStake()))
             return DoS(100, error("CTransaction::CheckTransaction() : txout empty for user transaction"));
         // noocoin: enforce minimum output amount
-        if ((!txout.IsEmpty()) && txout.nValue < MIN_TXOUT_AMOUNT)
+		if ((!txout.IsEmpty() && !(IsCoinAge() && i == 0)) && txout.nValue < MIN_TXOUT_AMOUNT)
             return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue below minimum"));
         if (txout.nValue > MAX_MONEY)
             return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue too high"));
@@ -658,6 +659,9 @@ bool CTxMemPool::addUnchecked(CTransaction &tx)
             mapNextTx[tx.vin[i].prevout] = CInPoint(&mapTx[hash], i);
         nTransactionsUpdated++;
     }
+	//TODO if PAPI, decode and add to CPAPIs
+	//TODO if MPE, decode and add to CPAPIs
+	//TODO if TAPI, decode and add to TAPIs
     return true;
 }
 
@@ -1875,7 +1879,7 @@ bool CBlock::CheckBlock() const
                    FormatMoney(vtx[0].GetValueOut()).c_str(),
                    FormatMoney(GetProofOfWorkReward(nBits)).c_str()));
 	
-	//TODO Check coinbase outputs that they are the correct sigs and amounts as PCC
+	//TODO Check coinbase outputs that they are the correct pubkey and amounts as PCC here
 	if (IsProofOfStake() && vtx[0].GetValueOut() > 0) {
 		//TODO get current saved PCC payouts
 		BOOST_FOREACH(const CTxOut& txout, vtx[0].vout)
@@ -3076,6 +3080,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (tx.AcceptToMemoryPool(txdb, true, &fMissingInputs))
         {
             SyncWithWallets(tx, NULL, true);
+			printf("RecievedTransaction:\n%s", tx.ToString().c_str());
             RelayMessage(inv, vMsg);
             mapAlreadyAskedFor.erase(inv);
             vWorkQueue.push_back(inv.hash);
@@ -3686,8 +3691,6 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfS
     CTransaction txNew;
     txNew.vin.resize(1);
     txNew.vin[0].prevout.SetNull();
-    txNew.vout.resize(1);
-    txNew.vout[0].scriptPubKey << reservekey.GetReservedKey() << OP_CHECKSIG;
 
     // Add our coinbase tx as first transaction
     pblock->vtx.push_back(txNew);
@@ -3706,13 +3709,14 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfS
             if (pwallet->CreateCoinStake(*pwallet, pblock->nBits, nSearchTime-nLastCoinStakeSearchTime, txCoinStake))
             {
                 if (txCoinStake.nTime >= max(pindexPrev->GetMedianTimePast()+1, pindexPrev->GetBlockTime() - nMaxClockDrift))
-                {   // make sure coinstake would meet timestamp protocol
-                    // as it would be the same as the block timestamp
+                {
                     //pblock->vtx[0].vout[0].SetEmpty();
 					
-					//TODO get PCC, split up reward and add all outputs to coinbase
-					pblock->vtx[0].vout[0].nValue = GetProofOfWorkReward(pblock->nBits);
+					//TODO get PCC, split up reward and add all outputs to coinbase here
+					pblock->vtx[0].vout.push_back(CTxOut(GetProofOfWorkReward(pblock->nBits), CScript() << reservekey.GetReservedKey() << OP_CHECKSIG));
 					
+					// make sure coinstake would meet timestamp protocol
+                    // as it would be the same as the block timestamp
                     pblock->vtx[0].nTime = txCoinStake.nTime;
                     pblock->vtx.push_back(txCoinStake);
                 }

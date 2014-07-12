@@ -87,6 +87,12 @@ const char* GetTxnOutputType(txnouttype t)
     case TX_PUBKEYHASH: return "pubkeyhash";
     case TX_SCRIPTHASH: return "scripthash";
     case TX_MULTISIG: return "multisig";
+    case TX_NULL_DATA: return "null";
+    case TX_PAPI: return "PAPI";
+    case TX_TAPI: return "TAPI";
+    case TX_MPE: return "MPE";
+    case TX_DPO: return "DPO";
+    case TX_DPP: return "DPP";
     }
     return NULL;
 }
@@ -1213,6 +1219,17 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
 
         // Sender provides N pubkeys, receivers provides M signatures
         mTemplates.insert(make_pair(TX_MULTISIG, CScript() << OP_SMALLINTEGER << OP_PUBKEYS << OP_SMALLINTEGER << OP_CHECKMULTISIG));
+		
+        // Empty, provably prunable, data-carrying output
+        //mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN << OP_SMALLDATA));
+        mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN));
+		
+        // Noo pruneable data-carrying outputs
+		mTemplates.insert(make_pair(TX_PAPI, CScript() << OP_RETURN << OP_INT64 << OP_API));
+		mTemplates.insert(make_pair(TX_MPE, CScript() << OP_RETURN << OP_INT64 << OP_DATA << OP_API));
+		mTemplates.insert(make_pair(TX_TAPI, CScript() << OP_RETURN << OP_API << OP_DATA));
+		//mTemplates.insert(make_pair(TX_DPO, CScript() << OP_RETURN << OP_ID << OP_DATA));
+		//mTemplates.insert(make_pair(TX_DPP, CScript() << OP_RETURN << OP_ID));
     }
 
     // Shortcut for pay-to-script-hash, which are more constrained than the other types:
@@ -1295,6 +1312,27 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
                     vSolutionsRet.push_back(valtype(1, n));
                 }
                 else
+                    break;
+            }
+            else if (opcode2 == OP_SMALLDATA)
+            {
+                if (vch1.size() > 40)
+                    break;
+            }
+            else if (opcode2 == OP_DATA)
+            {
+				if (opcode1 > OP_PUSHDATA1) // smaller than 0xFFu //TODO set to other opcodes to accept higher sizes
+					break;
+            }
+            else if (opcode2 == OP_INT64)
+            {
+				if (opcode1 > 0x08)
+                    break;
+            }
+            else if (opcode2 == OP_API)
+            {
+				//2083 max URL size (maybe 0xFFF, or max 0x4000))
+				if (opcode1 > OP_PUSHDATA2 || vch1.size() > 2083)
                     break;
             }
             else if (opcode1 != opcode2 || vch1 != vch2)
@@ -1393,6 +1431,7 @@ int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned c
     switch (t)
     {
     case TX_NONSTANDARD:
+    case TX_NULL_DATA:
         return -1;
     case TX_PUBKEY:
         return 1;
