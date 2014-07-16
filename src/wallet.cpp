@@ -363,21 +363,21 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
             if (!wtx.WriteToDisk())
                 return false;
 #ifndef QT_GUI
-        // If default receiving address gets used, replace it with a new one 
-        CScript scriptDefaultKey;
-        scriptDefaultKey.SetBitcoinAddress(vchDefaultKey);
-        BOOST_FOREACH(const CTxOut& txout, wtx.vout)
-        {
-            if (txout.scriptPubKey == scriptDefaultKey)
-            {
-                std::vector<unsigned char> newDefaultKey;
-                if (GetKeyFromPool(newDefaultKey, false))
-                {
-                    SetDefaultKey(newDefaultKey);
-                    SetAddressBookName(CBitcoinAddress(vchDefaultKey), "");
-                }
-            }
-        }
+//        // If default receiving address gets used, replace it with a new one 
+//        CScript scriptDefaultKey;
+//        scriptDefaultKey.SetBitcoinAddress(vchDefaultKey);
+//        BOOST_FOREACH(const CTxOut& txout, wtx.vout)
+//        {
+//            if (txout.scriptPubKey == scriptDefaultKey)
+//            {
+//                std::vector<unsigned char> newDefaultKey;
+//                if (GetKeyFromPool(newDefaultKey, false))
+//                {
+//                    SetDefaultKey(newDefaultKey);
+//                    SetAddressBookName(CBitcoinAddress(vchDefaultKey), "");
+//                }
+//            }
+//        }
 #endif
         // Notify UI
         vWalletUpdated.push_back(hash);
@@ -1520,6 +1520,32 @@ bool CWallet::CreateCoinageTransaction(const CScript& csData, int64 nValue, CWal
     return true;
 }
 
+// Create a transaction with the first output as data carrier
+bool CWallet::CreateDataTransaction(const CScript& csData, CWalletTx& wtxNew)
+{
+    wtxNew.BindWallet(this);
+
+    {
+        LOCK2(cs_main, cs_wallet);
+        // txdb must be opened before the mapWallet lock
+        CTxDB txdb("r");
+        {
+			wtxNew.vin.clear();
+			wtxNew.vout.clear();
+			wtxNew.fFromMe = true;
+			wtxNew.fTimeReceivedIsTxTime = true;
+
+			wtxNew.vout.push_back(CTxOut(0, csData)); //this will burn coins if a value > 0 is put in
+
+			// Limit size
+			unsigned int nBytes = ::GetSerializeSize(*(CTransaction*)&wtxNew, SER_NETWORK, PROTOCOL_VERSION);
+			if (nBytes >= MAX_BLOCK_SIZE_GEN/5)
+				return false;
+        }
+    }
+    return true;
+}
+
 // Call after CreateTransaction unless you want to abort
 bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
 {
@@ -1561,7 +1587,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
         if (!wtxNew.AcceptToMemoryPool())
         {
             // This must not fail. The transaction has already been signed and recorded.
-            printf("CommitTransaction() : Error: Transaction not valid");
+            printf("CommitTransaction() : Error: Transaction not valid\n");
             return false;
         }
         wtxNew.RelayWalletTransaction();
