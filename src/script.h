@@ -186,7 +186,7 @@ enum opcodetype
     // template matching params
     OP_ID = 0xf5,
     OP_API = 0xf6,
-    OP_INT64 = 0xf7,
+    OP_UINT64 = 0xf7,
     OP_DATA = 0xf8,
     OP_SMALLDATA = 0xf9,
     OP_SMALLINTEGER = 0xfa,

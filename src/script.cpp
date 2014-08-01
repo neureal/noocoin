@@ -1225,9 +1225,9 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         mTemplates.insert(make_pair(TX_NULL_DATA, CScript() << OP_RETURN));
 		
         // Noo pruneable data-carrying outputs
-		mTemplates.insert(make_pair(TX_PAPI, CScript() << OP_RETURN << OP_INT64 << OP_API));
-		mTemplates.insert(make_pair(TX_MPE, CScript() << OP_RETURN << OP_INT64 << OP_DATA << OP_API));
-		mTemplates.insert(make_pair(TX_TAPI, CScript() << OP_RETURN << OP_API << OP_DATA));
+		mTemplates.insert(make_pair(TX_PAPI, CScript() << OP_RETURN << OP_UINT64 << OP_API));
+		mTemplates.insert(make_pair(TX_TAPI, CScript() << OP_RETURN << OP_RETURN << OP_DATA << OP_API));
+		mTemplates.insert(make_pair(TX_MPE, CScript() << OP_RETURN << OP_UINT64 << OP_DATA << OP_API));
 		//mTemplates.insert(make_pair(TX_DPO, CScript() << OP_RETURN << OP_ID << OP_DATA));
 		//mTemplates.insert(make_pair(TX_DPP, CScript() << OP_RETURN << OP_ID));
     }
@@ -1321,19 +1321,22 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
             }
             else if (opcode2 == OP_DATA)
             {
-				if (opcode1 > OP_PUSHDATA1) // smaller than 0xFFu //TODO set to other opcodes to accept higher sizes
+				if (opcode1 <= OP_0 || opcode1 > OP_PUSHDATA1) // smaller than 0xFFu //TODO compair to other opcodes to accept higher sizes
 					break;
+                vSolutionsRet.push_back(vch1);
             }
-            else if (opcode2 == OP_INT64)
+            else if (opcode2 == OP_UINT64)
             {
-				if (opcode1 > 0x08)
+				if (opcode1 <= OP_0 || opcode1 > 0x08)
                     break;
+                vSolutionsRet.push_back(vch1);
             }
             else if (opcode2 == OP_API)
             {
 				//2083 max URL size (maybe 0xFFF, or max 0x4000))
-				if (opcode1 > OP_PUSHDATA2 || vch1.size() > 2083)
+				if (opcode1 <= OP_0 || opcode1 > OP_PUSHDATA2 || vch1.size() > 2083)
                     break;
+                vSolutionsRet.push_back(vch1);
             }
             else if (opcode1 != opcode2 || vch1 != vch2)
             {
