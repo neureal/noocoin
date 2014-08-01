@@ -458,6 +458,102 @@ bool AppInit2(int argc, char* argv[])
         pwalletMain->ScanForWalletTransactions(pindexRescan, true);
         printf(" rescan      %15"PRI64d"ms\n", GetTimeMillis() - nStart);
     }
+	
+
+	//get all TAPI from blockchain
+    CBlockIndex* pindex = pindexGenesisBlock;
+	while (pindex)
+	{
+		CBlock block;
+		block.ReadFromDisk(pindex, true);
+		
+		BOOST_FOREACH(CTransaction& tx, block.vtx)
+		{
+			if (tx.IsCoinBase() || tx.IsCoinStake() || !tx.IsFinal())
+				continue;
+			if (tx.IsCoinAge() || !tx.IsData())
+				continue;
+			txnouttype whichType;
+			std::vector<valtype> vSolutions;
+			if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+				continue;
+			if (whichType == TX_TAPI)
+			{
+				if (!mapCTAPIs.count(tx.nTime)) //leave first in blockchain on conflict
+					mapCTAPIs[tx.nTime] = CTAPI(CBigNum(vSolutions[0]).getuint64()); //TODO change to just vSolutions[0]
+			}
+		}
+		
+		pindex = pindex->pnext;
+    }
+	
+	//get all PAPI and MPE from blockchain and integrate into mapCTAPI and mapCPAPIs/mapCMPEs
+    pindex = pindexGenesisBlock;
+	while (pindex)
+	{
+		CBlock block;
+		block.ReadFromDisk(pindex, true);
+		
+		BOOST_FOREACH(CTransaction& tx, block.vtx)
+		{
+			if (tx.IsCoinBase() || tx.IsCoinStake() || !tx.IsFinal())
+				continue;
+			if (!tx.IsCoinAge() || tx.IsData())
+				continue;
+			txnouttype whichType;
+			std::vector<valtype> vSolutions;
+			if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+				continue;
+			if (whichType == TX_PAPI)
+			{
+
+				uint64 tick = CBigNum(vSolutions[0]).getuint64();
+				int64 val = tx.vout[1].nValue;
+				//*****find absolute tick-index	
+				map<unsigned int, CTAPI>::iterator it = mapCTAPIs.upper_bound(tx.nTime); //only future tick payments
+				while (--tick && it != mapCTAPIs.end()) it++;
+				if (it == mapCTAPIs.end()) //payment for future (unknown yet) tick, add to mapCPAPIs
+				{
+					tick += mapCTAPIs.size(); //make absolute
+					mapCPAPIs[tick] = mapCPAPIs[tick] + val;
+				}
+				else
+					(*it).second.payment = (*it).second.payment + val;
+			} else 
+			if (whichType == TX_MPE)
+			{
+				uint64 tick = CBigNum(vSolutions[0]).getuint64();
+				uint64 data = CBigNum(vSolutions[1]).getuint64(); //TODO change to valtype and only decode when checking closeness
+				CScript payto;
+				payto = tx.vout[1].scriptPubKey;
+				//*****find absolute tick-index	
+				map<unsigned int, CTAPI>::iterator it = mapCTAPIs.upper_bound(tx.nTime); //only future tick payments
+				while (--tick && it != mapCTAPIs.end()) it++;
+				if (it == mapCTAPIs.end()) //prediction for future (unknown yet) tick, add to mapCMPEs
+				{
+					tick += mapCTAPIs.size(); //make absolute
+					mapCMPEs[tick].push_back(make_pair(payto, data));
+				}
+				else
+					(*it).second.MPEs.push_back(make_pair(payto, data));
+			}
+		}
+		pindex = pindex->pnext;
+    }
+	
+	//TODO make sure consecutive ticks are not the same data, block error otherwise
+		
+		//TODO check mapCPCC against coinbase of this block
+		//TODO update/add data to PCC table per blcok
+		//	non-matches stay, matches get removed and added to coinbase list
+		
+//		BOOST_FOREACH(const CTransaction &tx, block.vtx)
+//		{
+//			
+//			if (tx.IsData()) {}
+//
+//		}
+		
 
     InitMessage(_("Done loading"));
     printf("Done loading\n");
