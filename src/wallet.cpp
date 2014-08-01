@@ -1436,6 +1436,7 @@ bool CWallet::CreateCoinageTransaction(const CScript& csData, int64 nValue, CWal
 				wtxNew.vout.clear();
 				wtxNew.fFromMe = true;
 				
+				//CTxOut(0, csData) makes a copy of CScript
 				wtxNew.vout.push_back(CTxOut(0, csData)); //this will burn coins if a value > 0 is put in
 				
                 int64 nTotalValue = nValue + nFeeRet;
@@ -1551,7 +1552,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
 {
     {
         LOCK2(cs_main, cs_wallet);
-        printf("CommitTransaction:\n%s", wtxNew.ToString().c_str());
+		printf("CommitTransaction: %s\n", wtxNew.GetHash().ToString().c_str());
         {
             // This is only to keep the database open to defeat the auto-flush for the
             // duration of this scope.  This is the only place where this optimization
