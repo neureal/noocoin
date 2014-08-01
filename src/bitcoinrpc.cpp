@@ -804,17 +804,6 @@ Value submitvote(const Array& params, bool fHelp)
 	string strApi = params[2].get_str();
 	
 	
-	//***testing
-	//printf("*****test[%s]\n",CBigNum(~uint256(0) >> 24).GetHex().c_str());
-//    int64 nTime;
-//    nTime = GetTime();
-//	printf("*****GetTime[%s]\n",CBigNum(nTime).ToString().c_str());
-//	printf("*****GetTime[%s]\n",CBigNum(nTime).GetHex().c_str());
-//	printf("*****GetTimS[%s]\n",CBigNum(nTime >> 5).GetHex().c_str());
-//	string test = "this is a test";
-//	return test;
-	
-	
     // Wallet
     CWalletTx wtx;
     //string strError = pwalletMain->CreateCoinStake("", nAmount, wtx);
@@ -822,13 +811,6 @@ Value submitvote(const Array& params, bool fHelp)
     //string strError = pwalletMain->SendMoneyToBitcoinAddress("", nAmount, wtx);
     //if (strError != "")
     //    throw JSONRPCError(-4, strError);
-
-//    vector<pair<CScript, int64> > vecSend;
-//	CScript scriptPubKey;
-//	//bool test = scriptPubKey.empty();
-//	//scriptPubKey.clear();
-//    vecSend.push_back(make_pair(scriptPubKey, nAmount));
-//    CReserveKey keyChange(pwalletMain);
 
 	
 	// Mark PAPI transaction and data
@@ -847,7 +829,6 @@ Value submitvote(const Array& params, bool fHelp)
     CScript csPAPI;
 	csPAPI << OP_RETURN << CBigNum(nTickCount) << vector<unsigned char>(strApi.begin(), strApi.end());
 	
-    // Send
     int64 nFeeRequired = 0;
     bool fCreated = pwalletMain->CreateCoinageTransaction(csPAPI, nAmount, wtx, nFeeRequired);
     if (!fCreated)
@@ -857,10 +838,42 @@ Value submitvote(const Array& params, bool fHelp)
         throw JSONRPCError(-4, "Transaction creation failed");
     }
 	
+	//printf("***** wtx\n%s", wtx.ToString().c_str());
+    // Send
 	CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
     if (!pwalletMain->CommitTransaction(wtx, keyChange))
         throw JSONRPCError(-4, "Transaction commit failed");
 
+	
+//	//*****test TAPI creation
+	
+//	txnouttype whichType;
+//	std::vector<valtype> vSolutions;
+//	if (!Solver(wtx.vout[0].scriptPubKey, whichType, vSolutions))
+//		return false;
+//	if (whichType == TX_PAPI)
+//	{
+
+//			//TODO decode and add to mapCPAPIs
+//			//	convert std::vector<unsigned char> to other usable type
+//			string url = string(vSolutions[1].begin(), vSolutions[1].end());
+//			uint64 tick = CBigNum(vSolutions[0]).getuint64();
+//			printf("***** PAPI<api>[%s]\n", url.c_str());
+//			printf("***** PAPI<tick>[%llu]\n", tick);
+//			//	add to mapCPAPIs
+		
+//			//ConvertTo<boost::int64_t>(params[2])
+//			//vSolutions[1].get_int64()
+//			printf("***** PAPI<api>[%s]\n", string(vSolutions[1].begin(), vSolutions[1].end()).c_str());
+//			//std::reverse(vSolutions[0].begin(), vSolutions[0].end()); //TODO make big endian, only need to do with MPE data. don't need to do, just require little endian from miners
+//			//if (CBigNum(vSolutions[0]).getuint64() == 4294967296) //this works, so there is some problem with printf
+//			//{
+//				printf("***** PAPI<tick>[%llu]\n", CBigNum(vSolutions[0]).getuint64());
+//			//}
+	
+//	}
+	
+	
     return wtx.GetHash().GetHex();
 }
 
@@ -904,7 +917,7 @@ Value submitwork(const Array& params, bool fHelp)
 		throw JSONRPCError(-203, "Data too large");
 	
 //	//***data read testing
-//    // Convert big endian data to little endian
+//    // Convert big endian data to little endian //don't need, just require miner to send in the correct format
 //    // Extra zero at the end make sure bignum will interpret as a positive number
 //    std::vector<unsigned char> vchTmp(vchData.size()+1, 0);
 //    //std::vector<unsigned char> vchTmp(vchData.size(), 0); //no diff for 4 byte at least
@@ -912,16 +925,14 @@ Value submitwork(const Array& params, bool fHelp)
 //    // Convert little endian data to bignum
 //    CBigNum bn;
 //    bn.setvch(vchTmp);
-//	printf("*****test CBigNumX[%d]\n", bn.getuint64());
+//	printf("*****test CBigNumX[%llu]\n", bn.getuint64());
 //	
 //	//int64 timestamp = params[2].get_int64();
 //	//unsigned int testuint = CBigNum(vchData).getuint();
-//	printf("*****test CBigNumLittleEnd[%d]\n", CBigNum(vchData).getuint64()); //doesn't work
+//	printf("*****test CBigNumLittleEnd[%llu]\n", CBigNum(vchData).getuint64()); //doesn't work
 //    std::reverse(vchData.begin(), vchData.end());
-//	printf("*****test CBigNumBigEnd[%d]\n", CBigNum(vchData).getuint64()); //works
+//	printf("*****test CBigNumBigEnd[%llu]\n", CBigNum(vchData).getuint64()); //works
 //	printf("*****test HexStr[%s]\n", HexStr(vchData.begin(), vchData.end(), true).c_str());
-//	
-//	return "got it";
 	
     // Wallet
     CWalletTx wtx;
@@ -929,7 +940,6 @@ Value submitwork(const Array& params, bool fHelp)
     CScript csMPE;
 	csMPE << OP_RETURN << CBigNum(pnTickIdx) << vchData << vector<unsigned char>(strApi.begin(), strApi.end());
 	
-    // Send
     int64 nFeeRequired = 0;
     bool fCreated = pwalletMain->CreateCoinageTransaction(csMPE, nAmount, wtx, nFeeRequired);
     if (!fCreated)
@@ -939,6 +949,8 @@ Value submitwork(const Array& params, bool fHelp)
         throw JSONRPCError(-4, "Transaction creation failed");
     }
 	
+	//printf("***** wtx\n%s", wtx.ToString().c_str());
+    // Send
 	CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
     if (!pwalletMain->CommitTransaction(wtx, keyChange))
         throw JSONRPCError(-4, "Transaction commit failed");
@@ -1108,8 +1120,454 @@ Value getcoinage(const Array& params, bool fHelp)
             "If [account] is not specified, returns the server's total curently available coinage.\n"
             "If [account] is specified, returns the curently available coinage in the account. (TODO)");
 
-    if (params.size() == 0)
-        return ValueFromAmount(pwalletMain->GetCoinageAvailable());
+//    if (params.size() == 0)
+//        return ValueFromAmount(pwalletMain->GetCoinageAvailable());
+	
+	
+//	//*****testing
+	//printf("*****test[%s]\n",CBigNum(~uint256(0) >> 24).GetHex().c_str());
+//    int64 nTime;
+//    nTime = GetTime();
+//	printf("*****GetTime[%s]\n",CBigNum(nTime).ToString().c_str());
+//	printf("*****GetTime[%s]\n",CBigNum(nTime).GetHex().c_str());
+//	printf("*****GetTimS[%s]\n",CBigNum(nTime >> 5).GetHex().c_str());
+//	string test = "this is a test";
+//	return test;
+	
+//    vector<pair<CScript, int64> > vecSend;
+//	CScript scriptPubKey;
+//	//bool test = scriptPubKey.empty();
+//	//scriptPubKey.clear();
+//    vecSend.push_back(make_pair(scriptPubKey, nAmount));
+//    CReserveKey keyChange(pwalletMain);
+	
+	
+	
+//	//*****match TAPIs and MPEs in blocks
+//	//TODO use to thoroughly scan blockchain and check for correct coinbases
+	
+//	//scan wallet db
+//    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); it++)
+//    {
+//        CWalletTx tx = (*it).second;
+//		printf("***** tx\n%s", tx.ToString().c_str());
+//    }
+	
+	
+//    std::map<uint64, CTransaction> mapCPAPIs;
+//	
+//    vector<pair<CScript, int64> > vecSend;
+//        vecSend.push_back(make_pair(scriptPubKey, nAmount));
+//
+//	map<pair<unsigned int, unsigned int>, CBlockIndex*> mapBlockPos;
+//	pair<unsigned int, unsigned int> pos = make_pair(pindex->nFile, pindex->nBlockPos);
+//	mapBlockPos[pos] = pindex;
+	
+	
+	
+//	//scan blockchain file
+//	
+//	
+//    //CBlockIndex* pindex = pindexBest; //scan backwards
+//    CBlockIndex* pindex = pindexGenesisBlock;
+//	
+//	//while (pindex && pindex->pprev)
+//	while (pindex)
+//	{
+//		CBlock block;
+//		block.ReadFromDisk(pindex, true);
+//		
+//		if (pindex != pindexGenesisBlock)
+//		{
+			
+//			for (map<uint64, vector<pair<CScript, uint64> > >::iterator it = mapCPCC.begin(); it != mapCPCC.end(); it++)
+//			{
+//				uint64 tick = (*it).first;
+//				vector<pair<CScript, valtype> > vMPs = (*it).second;
+//
+//				printf("\ttick[%llu]\n", tick);
+//
+//				BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, vMPs)
+//				{
+//					printf("\t\tpayto[%s] closeness[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
+//				}
+//			}
+//			
+	
+//		}
+		
+//		BOOST_FOREACH(CTransaction& tx, block.vtx)
+//		{
+//			
+//			if (tx.IsCoinBase() || tx.IsCoinStake() || !tx.IsFinal())
+//				continue;
+//			if (!tx.IsCoinAge() && !tx.IsData())
+//				continue;
+//
+//			txnouttype whichType;
+//			std::vector<valtype> vSolutions;
+//			if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+//				continue;
+//			if (whichType == TX_TAPI && tx.IsData())
+//			{
+//				printf("***** blockchain TAPI\n%s", tx.ToString().c_str());
+
+				//string api = string(vSolutions[1].begin(), vSolutions[1].end());
+//				valtype data = vSolutions[0];
+//				uint64 data = CBigNum(vSolutions[0]).getuint64(); //TODO change to valtype
+				
+//				mapCTAPIs[tx.nTime] = CTAPI(data);
+
+//				printf("***** TAPI nTime[%llu]\n", tx.nTime);
+//				printf("***** TAPI<data>[%llu]\n", nData);
+				//printf("***** TAPI<api>[%s]\n", api.c_str());
+
+//			} else 
+//			if (whichType == TX_PAPI && tx.IsCoinAge())
+//			{
+//				printf("***** blockchain PAPI\n%s", tx.ToString().c_str());
+
+//				//string api = string(vSolutions[1].begin(), vSolutions[1].end());
+//				uint64 tick = CBigNum(vSolutions[0]).getuint64();
+//				int64 val = tx.vout[1].nValue;
+				
+//				//*****find absolute tick-index	
+//				map<unsigned int, CTAPI>::iterator it = mapCTAPIs.upper_bound(tx.nTime); //only future tick payments
+//				
+//				while (--tick && it != mapCTAPIs.end()) it++;
+//				
+//				if (it == mapCTAPIs.end()) //payment for future (unknown yet) tick, add to mapCPAPIs
+//				{
+//					tick += mapCTAPIs.size(); //make absolute
+//					mapCPAPIs[tick] = mapCPAPIs[tick] + val;
+//				}
+//				else
+//					(*it).second.payment = (*it).second.payment + val;
+				
+				//mapCTAPIs.size() + tick;
+				
+//				printf("***** PAPI nTime[%llu]\n", tx.nTime);
+//				printf("***** PAPI<tick>[%llu]\n", tick);
+//				
+//				printf("***** PAPI nValue[%s]\n", FormatMoney(val).c_str());
+//				//printf("***** PAPI<api>[%s]\n", api.c_str());
+//			} else 
+//			if (whichType == TX_MPE && tx.IsCoinAge())
+//			{
+//				printf("***** blockchain MPE\n%s", tx.ToString().c_str());
+
+//				//txnouttype whichType2;
+//				//std::vector<valtype> vSolutions2;
+//				//if (!Solver(tx.vout[1].scriptPubKey, whichType2, vSolutions2))
+//				//	continue;
+//
+//				//string api = string(vSolutions[2].begin(), vSolutions[2].end());
+//				uint64 tick = CBigNum(vSolutions[0]).getuint64();
+//				//valtype data = vSolutions[1];
+//				uint64 data = CBigNum(vSolutions[1]).getuint64(); //TODO change to valtype and only decode when checking closeness
+//				CScript payto;
+//				payto = tx.vout[1].scriptPubKey;
+				
+//				//*****find absolute tick-index	
+//				map<unsigned int, CTAPI>::iterator it = mapCTAPIs.upper_bound(tx.nTime); //only future tick payments
+//				
+//				while (--tick && it != mapCTAPIs.end()) it++;
+//				
+//				if (it == mapCTAPIs.end()) //prediction for future (unknown yet) tick, add to mapCMPEs
+//				{
+//					tick += mapCTAPIs.size(); //make absolute
+//					mapCMPEs[tick].push_back(make_pair(payto, data));
+//				}
+//				else
+//					(*it).second.MPEs.push_back(make_pair(payto, data));
+				
+				
+				//valtype pubkey = vSolutions2[0];
+				//printf("***** MPE type[%s]\n", GetTxnOutputType(whichType2));
+				//printf("***** MPE<pubkey>[%s]\n", HexStr(pubkey).c_str());
+
+//				printf("***** MPE nTime[%llu]\n", tx.nTime);
+//				printf("***** MPE<tick>[%llu]\n", tick);
+//				
+//				printf("***** MPE<data>[%llu]\n", data);
+//				//printf("***** MPE<api>[%s]\n", api.c_str());
+//				printf("***** MPE<payto>[%s]\n", payto.ToString().c_str());
+//			}
+//
+//		}
+//		
+//		
+//		//pindex = pindex->pprev;
+//		pindex = pindex->pnext;
+//    }
+	
+	list<pair<CScript, uint64> > testList;
+	
+//	//print out maps
+//    map<unsigned int, CTAPI> mapCTAPIs;
+//    map<uint64, int64> mapCPAPIs;
+//    map<uint64, vector<pair<CScript, valtype> > > mapCMPEs;
+	
+	printf("***** mapCTAPIs\n");
+	uint64 tickIdxTest = 0;
+	for (map<unsigned int, CTAPI>::iterator it = mapCTAPIs.begin(); it != mapCTAPIs.end(); it++)
+	{
+		unsigned int timestamp = (*it).first;
+		bool paid = (*it).second.paid;
+		uint64 data = (*it).second.data;
+		int64 payment = (*it).second.payment;
+		printf("\ttick[%llu] timestamp[%llu] paid?[%d] data[%llu] payment[%s]\n", tickIdxTest, timestamp, paid, data, FormatMoney(payment).c_str());
+		
+		vector<pair<CScript, uint64> > vMPs = (*it).second.MPEs;
+		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, vMPs)
+		{
+			//testList.push_back(pMP);
+			//uint64 diff = llabs(data - pMP.second);
+			testList.push_back(make_pair(pMP.first, llabs(data - pMP.second)));
+			//printf("\t\tpayto[%s] data[%llu] guess[%llu] diff[%llu]\n", pMP.first.ToString().c_str(), data, pMP.second, diff);
+			
+			printf("\t\tpayto[%s] guess[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
+		}
+		tickIdxTest++;
+	}
+
+	printf("***** mapCPAPIs\n");
+	for (map<uint64, int64>::iterator it = mapCPAPIs.begin(); it != mapCPAPIs.end(); it++)
+	{
+		uint64 tick = (*it).first;
+		int64 total = (*it).second;
+		printf("\ttick[%llu] total[%s]\n", tick, FormatMoney(total).c_str());
+	}
+	
+	printf("***** mapCMPEs\n");
+	for (map<uint64, vector<pair<CScript, uint64> > >::iterator it = mapCMPEs.begin(); it != mapCMPEs.end(); it++)
+	{
+		uint64 tick = (*it).first;
+		vector<pair<CScript, uint64> > vMPs = (*it).second;
+
+		printf("\ttick[%llu]\n", tick);
+//		printf("\tfirst[%s]\n", vMPs[0].first.ToString().c_str());
+//		printf("\tsecnd[%s]\n", HexStr(vMPs[0].second).c_str());
+
+		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, vMPs)
+		{
+			printf("\t\tpayto[%s] data[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
+		}
+	}
+
+//	//test sorting with list
+//	testList.sort();
+//	for (list<pair<CScript, uint64> >::iterator it = testList.begin(); it != testList.end(); ++it)
+//		printf("sort payto[%s] data[%llu]\n", (*it).first.ToString().c_str(), (*it).second);
+
+//	testList.sort(CompareMPEs);
+//	for (list<pair<CScript, uint64> >::iterator it = testList.begin(); it != testList.end(); ++it)
+//		printf("payto[%s] sort data[%llu]\n", (*it).first.ToString().c_str(), (*it).second);
+//
+//	int shares = 1;
+//	for (list<pair<CScript, uint64> >::iterator it = testList.begin(); it != testList.end() && shares > 0; ++it)
+//	{
+//		mapCPCC[0xEF5637].push_back(make_pair((*it).first, 1)); //add to payout
+//		shares--;
+//	}
+	
+	printf("***** mapCPCC\n");
+	for (map<uint256, vector<pair<CScript, uint64> > >::iterator it = mapCPCC.begin(); it != mapCPCC.end(); it++)
+	{
+		uint256 blockhash = (*it).first;
+		vector<pair<CScript, uint64> > vMPs = (*it).second;
+
+		printf("\tblockhash[%s]\n", blockhash.GetHex().c_str());
+
+		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, vMPs)
+		{
+			printf("\t\tpayto[%s] shares[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
+		}
+	}
+	
+//	map<unsigned int, CTAPI> mapCTAPIsTmp;
+//	mapCTAPIsTmp[1406530181] = CTAPI(23532);
+//	mapCTAPIsTmp[1406530141] = CTAPI(7443);
+//	
+//	uint64 tickIdx = mapCTAPIs.size();
+//	for (map<unsigned int, CTAPI>::iterator it = mapCTAPIsTmp.begin(); it != mapCTAPIsTmp.end(); it++)
+//	{
+//		mapCTAPIs[(*it).first] = (*it).second;
+//
+//		//add any future PAPI payments that match the new ticks
+//		map<uint64, int64>::iterator itP = mapCPAPIs.find(tickIdx);
+//		if (itP != mapCPAPIs.end())
+//		{
+//			mapCTAPIs[(*it).first].payment = (*itP).second;
+//			mapCPAPIs.erase(itP);
+//		}
+//
+//		//add any future MPEs that match this tick
+//		map<uint64, vector<pair<CScript, uint64> > >::iterator itM = mapCMPEs.find(tickIdx);
+//		if (itM != mapCMPEs.end())
+//		{
+//			mapCTAPIs[(*it).first].MPEs = (*itM).second;
+//			mapCMPEs.erase(itM);
+//		}
+//
+//		tickIdx++;
+//	}
+	
+//	//mapCTAPIs.clear();
+//	
+//	unsigned int tickCurr;
+//	bool mapCTAPIWasEmpty = false;
+//	map<unsigned int, CTAPI>::reverse_iterator itC = mapCTAPIs.rbegin();
+//	if (itC == mapCTAPIs.rend())
+//		mapCTAPIWasEmpty = true;
+//	else
+//		tickCurr = (*itC).first;
+//	
+//	printf("\ttickCurr[%llu]\n", tickCurr);
+//	printf("\tmapCTAPIWasEmpty[%llu]\n", mapCTAPIWasEmpty);
+//	
+//	mapCTAPIs[tickCurr + 10] = CTAPI(7443);
+//	mapCTAPIs[tickCurr + 20] = CTAPI(23532);
+//	
+//	map<unsigned int, CTAPI>::iterator itC2 = mapCTAPIs.begin();
+//	if (!mapCTAPIWasEmpty)
+//	{
+//		itC2 = mapCTAPIs.find(tickCurr);
+//		itC2++;
+//	}
+//	for (; itC2 != mapCTAPIs.end(); itC2++) {
+//		printf("\titC2[%llu]\n", (*itC2).first);
+//		
+//		//add any future PAPI payments that match the new ticks
+//		map<uint64, int64>::iterator itP = mapCPAPIs.find(tick);
+//		if (itP != mapCPAPIs.end())
+//		{
+//			mapCTAPIs[(*itC2).first].payment = (*itP).second;
+//			mapCPAPIs.erase(itP);
+//		}
+//
+//		//add any future MPEs that match this tick
+//		map<uint64, vector<pair<CScript, uint64> > >::iterator itM = mapCMPEs.find(tick);
+//		if (itM != mapCMPEs.end())
+//		{
+//			mapCTAPIs[nTime].MPEs = (*itM).second;
+//			mapCMPEs.erase(itM);
+//		}
+//
+//	}
+//	printf("\titC2[done]\n");
+	
+//	//*****test coinbase payment
+	
+//	CReserveKey reservekey(pwalletMain);
+//	
+//    CTransaction txNew;
+//    txNew.vin.resize(1);
+//    txNew.vin[0].prevout.SetNull();
+	
+//    txNew.vout.resize(1);
+//    txNew.vout[0].scriptPubKey << reservekey.GetReservedKey() << OP_CHECKSIG;
+	
+//		CScript csPayment;
+//		csPayment << reservekey.GetReservedKey() << OP_CHECKSIG;
+//		pblock->vtx[0].vout.push_back(CTxOut(GetProofOfWorkReward(pblock->nBits), csPayment));
+	
+//						csPayment << CBigNum(9999) << OP_RETURN;
+//						csPayment << CBigNum(9999) << vector<unsigned char>(strApi.begin(), strApi.end()) << OP_CHECKSIG;
+//					txNew.vout.clear();
+
+//		int64 nTotalPayout = 1000;
+//		int num = 4;
+//		loop
+//		{
+//			if (num-- <= 0) break;
+//			
+//			CScript csPayment;
+//			csPayment << reservekey.GetReservedKey() << OP_CHECKSIG;
+//			//csPayment << CBigNum(9999) << vector<unsigned char>(strApi.begin(), strApi.end()) << OP_CHECKSIG;
+//			
+//			nTotalPayout /= 2;
+//			txNew.vout.push_back(CTxOut(nTotalPayout, csPayment));
+//			
+//		}
+//		if (txNew.vout.empty())
+//		{
+//			txNew.vout.resize(1);
+//			txNew.vout[0].SetEmpty();
+//		}
+//		printf("***** txNew\n%s", txNew.ToString().c_str());
+			
+		
+//	reservekey.KeepKey();
+	
+	
+
+//	//*****get all current mempool transactions
+//	{
+//		LOCK2(cs_main, mempool.cs);
+//		
+//        for (map<uint256, CTransaction>::iterator mi = mempool.mapTx.begin(); mi != mempool.mapTx.end(); ++mi)
+//        {
+//            CTransaction& tx = (*mi).second;
+//            if (tx.IsCoinBase() || tx.IsCoinStake() || !tx.IsFinal())
+//                continue;
+//            if (!tx.IsCoinAge() && !tx.IsData())
+//                continue;
+//			
+//			txnouttype whichType;
+//			std::vector<valtype> vSolutions;
+//			if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+//				continue;
+//			if (whichType == TX_TAPI && tx.IsData())
+//			{
+//				printf("***** mempool TAPI\n%s", tx.ToString().c_str());
+//				
+//				string api = string(vSolutions[1].begin(), vSolutions[1].end());
+//				uint64 data = CBigNum(vSolutions[0]).getuint64(); //can be changed to whatever datatype
+//				
+//				printf("***** TAPI<data>[%llu]\n", data);
+//				printf("***** TAPI<api>[%s]\n", api.c_str());
+//				
+//			} else 
+//			if (whichType == TX_MPE && tx.IsCoinAge())
+//			{
+//				printf("***** mempool MPE\n%s", tx.ToString().c_str());
+//				
+//				txnouttype whichType2;
+//				std::vector<valtype> vSolutions2;
+//				if (!Solver(tx.vout[1].scriptPubKey, whichType2, vSolutions2))
+//					continue;
+//				
+//				string api = string(vSolutions[2].begin(), vSolutions[2].end());
+//				uint64 tick = CBigNum(vSolutions[0]).getuint64();
+//				uint64 data = CBigNum(vSolutions[1]).getuint64(); //can be changed to whatever datatype
+//				valtype pubkey = vSolutions2[0];
+//				
+//				printf("***** MPE type[%s]\n", GetTxnOutputType(whichType2));
+//				printf("***** MPE<pubkey>[%s]\n", HexStr(pubkey).c_str());
+//				
+//				printf("***** MPE<tick>[%llu]\n", tick);
+//				printf("***** MPE<data>[%llu]\n", data);
+//				printf("***** MPE<api>[%s]\n", api.c_str());
+//			} else 
+//			if (whichType == TX_PAPI && tx.IsCoinAge())
+//			{
+//				printf("***** mempool PAPI\n%s", tx.ToString().c_str());
+//				
+//				int64 val = tx.vout[1].nValue;
+//				string api = string(vSolutions[1].begin(), vSolutions[1].end());
+//				uint64 tick = CBigNum(vSolutions[0]).getuint64();
+//				
+//				printf("***** PAPI nValue[%s]\n", FormatMoney(val).c_str());
+//				printf("***** PAPI<tick>[%llu]\n", tick);
+//				printf("***** PAPI<api>[%s]\n", api.c_str());
+//			}
+//		}
+//	}
+	
+	
+	
+	
 	return ValueFromAmount(0);
 }
 
