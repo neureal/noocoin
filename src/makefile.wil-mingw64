@@ -65,12 +65,12 @@ USE_UPNP:=1
 INCLUDEPATHS= \
  -I"C:\msys\home\Wil\deps\boost_1_55_0" \
  -I"C:\msys\home\Wil\deps\db-4.8.30.NC\build_unix" \
- -I"C:\msys\home\Wil\deps\openssl-1.0.1b\include"
+ -I"C:\msys\home\Wil\deps\openssl-1.0.1h\include"
 
 LIBPATHS= \
  -L"C:\msys\home\Wil\deps\boost_1_55_0\stage\lib" \
  -L"C:\msys\home\Wil\deps\db-4.8.30.NC\build_unix" \
- -L"C:\msys\home\Wil\deps\openssl-1.0.1b"
+ -L"C:\msys\home\Wil\deps\openssl-1.0.1h"
 
 LIBS= \
  -l boost_system-mgw48-mt-s-1_55 \
@@ -85,7 +85,7 @@ LIBS= \
 DEFS=-DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB -DBOOST_SPIRIT_THREADSAFE
 DEBUGFLAGS=-g3 -gdwarf-2
 #CFLAGS=-static -pthread -O2 -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
-CFLAGS=-static -mthreads -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
+CFLAGS=-static -mthreads -Og -w -Wno-invalid-offsetof -Wformat $(DEBUGFLAGS) $(DEFS) $(INCLUDEPATHS)
 
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 
