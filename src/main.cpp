@@ -55,6 +55,41 @@ map<uint256, uint256> mapProofOfStake;
 map<uint256, CDataStream*> mapOrphanTransactions;
 map<uint256, map<uint256, CDataStream*> > mapOrphanTransactionsByPrev;
 
+//mapCAPIs
+//	API string
+//vCAPI
+//	mapCPAPI
+//	mapCTAPI
+//	mapCMPE
+
+//mapCTAPIs (api ticks found so far)
+//	nTime - key, sort
+//	CTAPI
+map<unsigned int, CTAPI> mapCTAPIs;
+
+//mapCPAPIs (future tick payments)
+//	absolute (future) index of mapCTAPIs //TODO does this cause problems if the blockchain is reordered?
+//vCPAPI
+//	total payment
+map<uint64, int64> mapCPAPIs;
+
+//mapCMPEs (future tick predictions)
+//	absolute (future) index of mapCTAPIs //TODO does this cause problems if the blockchain is reordered?
+//vCMPE
+//	payto
+//	data
+map<uint64, vector<pair<CScript, uint64> > > mapCMPEs; //TODO change to valtype
+//mapCMPEs[x].push_back(make_pair(scriptPubKey, data));
+
+
+//mapCPCC
+//	blockhash
+//vCWinners
+//	payto
+//	closeness (inverse difference to TAPI data, share of total)
+map<uint256, vector<pair<CScript, uint64> > > mapCPCC;
+
+
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
@@ -319,7 +354,7 @@ bool CTransaction::IsStandard() const
 //
 bool CTransaction::AreInputsStandard(const MapPrevTx& mapInputs) const
 {
-    if (IsCoinBase())
+    if (IsCoinBase() || IsData())
         return true; // Coinbases don't use vin normally
 
     for (unsigned int i = 0; i < vin.size(); i++)
@@ -447,7 +482,7 @@ int CMerkleTx::SetMerkleBranch(const CBlock* pblock)
 bool CTransaction::CheckTransaction() const
 {
     // Basic checks that don't depend on any context
-    if (vin.empty())
+    if (vin.empty() && !IsData())
         return DoS(10, error("CTransaction::CheckTransaction() : vin empty"));
     if (vout.empty())
         return DoS(10, error("CTransaction::CheckTransaction() : vout empty"));
@@ -463,7 +498,7 @@ bool CTransaction::CheckTransaction() const
         if (txout.IsEmpty() && (!IsCoinBase()) && (!IsCoinStake()))
             return DoS(100, error("CTransaction::CheckTransaction() : txout empty for user transaction"));
         // noocoin: enforce minimum output amount
-		if ((!txout.IsEmpty() && !(IsCoinAge() && i == 0)) && txout.nValue < MIN_TXOUT_AMOUNT)
+		if ((!txout.IsEmpty() && !((IsCoinAge() || IsData()) && i == 0)) && txout.nValue < MIN_TXOUT_AMOUNT)
             return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue below minimum"));
         if (txout.nValue > MAX_MONEY)
             return DoS(100, error("CTransaction::CheckTransaction() : txout.nValue too high"));
@@ -495,6 +530,337 @@ bool CTransaction::CheckTransaction() const
 
     return true;
 }
+
+
+bool CompareMPEs(const std::pair<CScript, uint64>& first, const std::pair<CScript, uint64>& second)  //TODO change to valtype
+{
+  return ( first.second < second.second );
+}
+
+//get real URL data
+valtype GetAPIData(const valtype& url)
+{
+	valtype ret;
+	//ret.clear();
+	
+	uint64 data = time(NULL);
+	//printf("***** TAPI time[%lli]\n", data);
+	//printf("***** TAPI timeMod10[%lli]\n", data%30);
+	data /= 30;
+	//printf("***** GetAPIData uint64[%lli]\n", data);
+	//uint64 data = CBigNum(vData).getuint64(); //TODO change to just vSolutions[0]
+	ret = CBigNum(data).getvch();
+	
+	
+	printf("***** GetAPIData[%s]\n", HexStr(ret.begin(), ret.end()).c_str());
+	return ret;
+}
+
+void CalculatePCC(CBlock* pblock)
+{
+	//gather and sort new TAPIs that are in this block
+	map<unsigned int, CTAPI> mapCTAPIsTmp;
+	BOOST_FOREACH(CTransaction& tx, pblock->vtx)
+	{
+		if (tx.IsCoinBase() || tx.IsCoinStake() || !tx.IsFinal())
+			continue;
+		if (tx.IsCoinAge() || !tx.IsData())
+			continue;
+		txnouttype whichType;
+		std::vector<valtype> vSolutions;
+		if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+			continue;
+		if (whichType == TX_TAPI)
+		{
+			//TODO add more checks to reject block if TAPIs are not right
+			if (!mapCTAPIs.count(tx.nTime))
+			mapCTAPIsTmp[tx.nTime] = CTAPI(CBigNum(vSolutions[0]).getuint64()); //TODO change to just vSolutions[0]
+		}
+	}
+	
+	//move the new TAPIs into mapCTAPIs
+	//move any stored PAPIs and MPEs targeting the new TAPIs into maps
+	uint64 tickIdx = mapCTAPIs.size();
+	for (map<unsigned int, CTAPI>::iterator it = mapCTAPIsTmp.begin(); it != mapCTAPIsTmp.end(); it++)
+	{
+		unsigned int idx = (*it).first; //TODO make this more efficient, should not be scanning index in map every time
+		
+		//if (pfrom) //TODO need better check if not already in mapCTAPIs?
+		mapCTAPIs[idx] = (*it).second; //TODO if I already have it, replace with data from one in block?
+
+		//add any stored future PAPI payments that match the new ticks
+		map<uint64, int64>::iterator itP = mapCPAPIs.find(tickIdx);
+		if (itP != mapCPAPIs.end())
+		{
+			mapCTAPIs[idx].payment = (*itP).second;
+			mapCPAPIs.erase(itP);
+		}
+
+		//add any stored future MPEs that match the new ticks
+		map<uint64, vector<pair<CScript, uint64> > >::iterator itM = mapCMPEs.find(tickIdx);
+		if (itM != mapCMPEs.end())
+		{
+			mapCTAPIs[idx].MPEs = (*itM).second;
+			mapCMPEs.erase(itM);
+		}
+		
+		tickIdx++;
+	}
+	
+	//add all new PAPIs, MPEs in block
+	BOOST_FOREACH(CTransaction& tx, pblock->vtx)
+	{
+		if (tx.IsCoinBase() || tx.IsCoinStake() || !tx.IsFinal())
+			continue;
+		if (!tx.IsCoinAge() || tx.IsData())
+			continue;
+		txnouttype whichType;
+		std::vector<valtype> vSolutions;
+		if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+			continue;
+		if (whichType == TX_PAPI)
+		{
+			uint64 tick = CBigNum(vSolutions[0]).getuint64();
+			int64 val = tx.vout[1].nValue;
+			//*****find absolute tick-index	
+			map<unsigned int, CTAPI>::iterator it = mapCTAPIs.upper_bound(tx.nTime); //only future tick payments
+			while (--tick && it != mapCTAPIs.end()) it++;
+			if (it == mapCTAPIs.end()) //payment for future (unknown yet) tick, add to mapCPAPIs
+			{
+				tick += mapCTAPIs.size(); //make absolute
+				mapCPAPIs[tick] = mapCPAPIs[tick] + val;
+			}
+			else
+				(*it).second.payment = (*it).second.payment + val;
+		} else 
+		if (whichType == TX_MPE)
+		{
+			uint64 tick = CBigNum(vSolutions[0]).getuint64();
+			uint64 data = CBigNum(vSolutions[1]).getuint64(); //TODO change to valtype and only decode when checking closeness
+			CScript payto;
+			payto = tx.vout[1].scriptPubKey;
+			//*****find absolute tick-index	
+			map<unsigned int, CTAPI>::iterator it = mapCTAPIs.upper_bound(tx.nTime); //only future tick payments
+			while (--tick && it != mapCTAPIs.end()) it++;
+			if (it == mapCTAPIs.end()) //prediction for future (unknown yet) tick, add to mapCMPEs
+			{
+				tick += mapCTAPIs.size(); //make absolute
+				mapCMPEs[tick].push_back(make_pair(payto, data));
+			}
+			else
+				(*it).second.MPEs.push_back(make_pair(payto, data));
+		}
+	}
+
+	
+	//TODO calculate PCC for this block
+	//which ticks in mapCTAPIs have already been paid? answer: ticks from other blocks
+	for (map<unsigned int, CTAPI>::iterator it = mapCTAPIsTmp.begin(); it != mapCTAPIsTmp.end(); it++)
+	{
+		unsigned int idx = (*it).first; //TODO make this more efficient, should not be scanning index in map every time
+		
+		if (mapCTAPIs[idx].payment <= 0) continue; //TODO put threshold in here
+		
+		if (mapCTAPIs[idx].MPEs.size() == 0) continue; //no predictions for tick
+		
+		uint64 data = mapCTAPIs[idx].data; //the real api data
+		
+		//TODO inverse proportion closeness??
+		
+		//sort so we can split coinbase
+		list<pair<CScript, uint64> > canidates; //TODO make this valtype and check for validity
+		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, mapCTAPIs[idx].MPEs)
+		{
+			canidates.push_back(make_pair(pMP.first, llabs(data - pMP.second)));
+		}
+		canidates.sort(CompareMPEs);
+		
+		int shares = 1;
+		for (list<pair<CScript, uint64> >::iterator it = canidates.begin(); it != canidates.end() && shares > 0; ++it)
+		{
+			mapCPCC[pblock->GetHash()].push_back(make_pair((*it).first, 1)); //add to payout
+			shares--;
+		}
+		//get matches closest to TAPI data
+		//TODO make shares relative so we can payout in gradient=
+//		for (list<pair<CScript, uint64> >::iterator it = canidates.begin(); it != canidates.end() && data < (*it).second; ++it);
+//		int64 diffNext = LLONG_MAX;
+//		if (it != canidates.end()) diffNext = (*it).second - data;
+//		--it;
+//		int64 diffPrev = data - (*it).second;
+//		if (diffPrev < diffNext) 
+			
+//			mapCPCC[pblock->GetHash()].push_back(make_pair((*it).second, 1)); //add to payout
+		
+	}
+	
+}
+
+//check a TAPI to see if it is an acceptable tick
+bool AcceptTAPI(unsigned int nTime, const valtype& vData)
+{
+	//TODO must limit TAPIs to deter flooding
+	//TODO if TAPI, decode and check validity
+	//	if not mine
+	//		do I have one that matches? yes = ignore
+	//			no = get real API value from URL
+	//			does it match? no = reject, yes = accept
+
+	uint64 data = CBigNum(vData).getuint64(); //TODO change to just vSolutions[0]
+
+	//****find where this sits in mempool tick order and throw it out if equal timestamp or matches data on either side
+	
+	{
+		LOCK2(cs_main, mempool.cs);
+
+		//gather and sort TAPIs in the mempool
+		//TODO use mapCTAPIsMemP to manage adding to this as they come in and remove when removed from mempool to make more efficient
+		map<unsigned int, CTAPI> mapCTAPIsMemP;
+		for (map<uint256, CTransaction>::iterator mi = mempool.mapTx.begin(); mi != mempool.mapTx.end(); ++mi)
+		{
+			CTransaction& tx = (*mi).second;
+			
+			if (tx.IsCoinBase() || tx.IsCoinStake() || !tx.IsFinal())
+				continue;
+			if (tx.IsCoinAge() || !tx.IsData())
+				continue;
+			txnouttype whichType;
+			std::vector<valtype> vSolutions;
+			if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+				continue;
+			if (whichType == TX_TAPI)
+			{
+				mapCTAPIsMemP[tx.nTime] = CTAPI(CBigNum(vSolutions[0]).getuint64()); //TODO change to just vSolutions[0]
+			}
+		}
+	
+	
+		map<unsigned int, CTAPI>::iterator it = mapCTAPIsMemP.lower_bound(nTime);
+
+		//no 2 with the same api-id can have the same timestamp, keep my data
+		if (nTime == (*it).first) 
+			return false;
+		//tick after: same api-id and 2 consecutive ticks can't have the same data
+		if (it != mapCTAPIsMemP.end() && data == (*it).second.data) //TODO should I replace the tick after with this one that is earlier instead?
+			return false;
+
+		//TODO only insert older data if there are enough signatures or enough payment
+
+		//tick before: same api-id and 2 consecutive ticks can't have the same data
+		if (it != mapCTAPIsMemP.begin())
+		{
+			it--;
+			if (data == (*it).second.data)
+				return false;
+			//new current tick, check value with real API that is has actually changed from last tick
+			if (it == mapCTAPIsMemP.end())
+			{
+				uint64 dataCheck = time(NULL);
+				dataCheck /= 30;
+				printf("***** TAPI new tick, check data[%lli]\n", dataCheck);
+				
+				if (dataCheck == (*it).second.data)
+					return false;
+			}
+			//++it;
+		} else
+		{
+			//first TAPI in mempool
+			map<unsigned int, CTAPI>::reverse_iterator it2 = mapCTAPIs.rbegin();
+			//only add if within mempool range, not blockchain and different data than last blockchain TAPI
+			if (it2 != mapCTAPIs.rend() && (nTime <= (*it2).first || data == (*it2).second.data))
+				return false;
+//			if (it == mapCTAPIs.rend()) //first TAPI ever!
+//				return true;
+		}
+
+		//mapCTAPIs[nTime] = CTAPI(data); //TODO change to valtype
+		//printf("********TAPI added to mapCTAPIs");
+
+	}
+	
+	return true;
+}
+
+//bool AcceptTAPI(unsigned int nTime, const valtype& vData)
+//{
+//	
+//	uint64 data = CBigNum(vData).getuint64(); //TODO change to valtype
+//	
+//	uint64 dataLast = 0;
+//	int64 uiTimeLast = -1;
+//	bool bAcceptTAPI = false;
+//
+//	{
+//		LOCK2(cs_main, mempool.cs);
+//
+//		//find youngest TAPI already in mempool
+//		for (map<uint256, CTransaction>::iterator mi = mempool.mapTx.begin(); mi != mempool.mapTx.end(); ++mi)
+//		{
+//			CTransaction& txTest = (*mi).second;
+//			if (txTest.IsCoinBase() || txTest.IsCoinStake() || !txTest.IsFinal())
+//				continue;
+//			if (txTest.IsCoinAge() || !txTest.IsData())
+//				continue;
+//
+//			txnouttype whichType;
+//			std::vector<valtype> vSolutions;
+//			if (!Solver(txTest.vout[0].scriptPubKey, whichType, vSolutions))
+//				continue;
+//			if (whichType == TX_TAPI && txTest.nTime > uiTimeLast) //ignore TAPI with same timestamp
+//			{
+//				//string api = string(vSolutions[1].begin(), vSolutions[1].end());
+//				//uint64 dataTransx = CBigNum(vSolutions[0]).getuint64(); //can be changed to whatever datatype
+//				dataLast  = CBigNum(vSolutions[0]).getuint64(); //TODO change to valtype
+//				uiTimeLast = txTest.nTime;
+//				printf("***** new youngest TAPI timestamp[%llu] data[%llu]\n", uiTimeLast, dataLast);
+//			}
+//		}
+//
+//		//found new tick
+//		if (uiTimeLast >= 0 && data != dataLast)
+//		{
+//			printf("***** new data tick\n");
+//			//TODO check to see if there are any PAPI payments for this tick
+//			for (map<uint256, CTransaction>::iterator mi = mempool.mapTx.begin(); mi != mempool.mapTx.end(); ++mi)
+//			{
+//				CTransaction& txTest = (*mi).second;
+//				if (txTest.IsCoinBase() || txTest.IsCoinStake() || !txTest.IsFinal())
+//					continue;
+//				if (!txTest.IsCoinAge() || txTest.IsData())
+//					continue;
+//
+//				txnouttype whichType;
+//				std::vector<valtype> vSolutions;
+//				if (!Solver(txTest.vout[0].scriptPubKey, whichType, vSolutions))
+//					continue;
+//				//TODO this needs to work for more than 1 tick into the future payments
+//				//TODO this needs to check api
+//				//TODO this needs to add up all payments
+//				printf("***** checking PAPI timestamp[%llu]\n", txTest.nTime);
+//				if (whichType == TX_PAPI && txTest.nTime > uiTimeLast && CBigNum(vSolutions[0]) == 1 && txTest.vout[1].nValue > MIN_TXOUT_AMOUNT)
+//				{
+//					bAcceptTAPI = true;
+//					break;
+//				}
+//			}
+//
+//		}
+//
+//		//this is the first TAPI in the mempool, check that it is different than last mapCTAPIs
+//		if (uiTimeLast < 0) {
+//			printf("***** first TAPI in the mempool\n");
+//			
+//			map<unsigned int, CTAPI>::reverse_iterator it = mapCTAPIs.rbegin();
+//			
+//			if (it != mapCTAPIs.rend() && nTime > (*it).first && data != (*it).second.data)
+//				bAcceptTAPI = true;
+//		}
+//	}
+//	
+//	
+//	return bAcceptTAPI;
+//}
 
 bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
                         bool* pfMissingInputs)
@@ -559,6 +925,84 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
         }
     }
 
+	if (tx.IsData())
+	{
+		txnouttype whichType;
+		std::vector<valtype> vSolutions;
+		if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+			return false;
+		
+		if (whichType == TX_TAPI)
+		{
+			printf("***** TAPI accepting into mempool\n");
+			if (!AcceptTAPI(tx.nTime, vSolutions[0]))
+				return false;
+		}
+		
+		fCheckInputs = false;
+		
+//		return false;
+//		
+//		{
+//			LOCK2(cs_main, mempool.cs);
+			
+
+//			//check if TAPI already in mempool
+//			for (map<uint256, CTransaction>::iterator mi = mempool.mapTx.begin(); mi != mempool.mapTx.end(); ++mi)
+//			{
+//				CTransaction& txTest = (*mi).second;
+//				if (txTest.IsCoinBase() || txTest.IsCoinStake() || !txTest.IsFinal())
+//					continue;
+//				if (txTest.IsCoinAge() || !txTest.IsData())
+//					continue;
+//
+//				if (txTest.nTime <= tx.nTime && txTest.vout[0].scriptPubKey == tx.vout[0].scriptPubKey)
+//					return error("CTxMemPool::accept() : Already have TAPI in mempool");
+//				
+//				
+//			}
+
+//			//found new tick
+//			if (uiTimeLast >= 0 && data != dataLast)
+//			{
+//				printf("***** new data tick!\n");
+//				//TODO check to see if there are any PAPI payments for this tick
+//				for (map<uint256, CTransaction>::iterator mi = mempool.mapTx.begin(); mi != mempool.mapTx.end(); ++mi)
+//				{
+//					CTransaction& txTest = (*mi).second;
+//					if (txTest.IsCoinBase() || txTest.IsCoinStake() || !txTest.IsFinal())
+//						continue;
+//					if (!txTest.IsCoinAge() || txTest.IsData())
+//						continue;
+//
+//					txnouttype whichType;
+//					std::vector<valtype> vSolutions;
+//					if (!Solver(txTest.vout[0].scriptPubKey, whichType, vSolutions))
+//						continue;
+//					//TODO this needs to work for more than 1 tick into the future payments
+//					//TODO this needs to check api
+//					//TODO this needs to add up all payments
+//					printf("***** checking PAPI timestamp[%llu]\n", txTest.nTime);
+//					if (whichType == TX_PAPI && txTest.nTime > uiTimeLast && CBigNum(vSolutions[0]) == 1 && txTest.vout[1].nValue > MIN_TXOUT_AMOUNT)
+//					{
+//						bCreateNewTAPI = true;
+//						break;
+//					}
+//				}
+//			}
+			
+//		}
+		
+	}
+
+	if (tx.IsCoinAge())
+	{
+		printf("***** CoinAge accepting into mempool\n");
+		//TODO if PAPI, check X
+		//TODO if MPE, check X
+		
+	}
+	
     if (fCheckInputs)
     {
         MapPrevTx mapInputs;
@@ -620,7 +1064,7 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
             return error("CTxMemPool::accept() : ConnectInputs failed %s", hash.ToString().substr(0,10).c_str());
         }
     }
-
+	
     // Store transaction in memory
     {
         LOCK(cs);
@@ -637,7 +1081,67 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
     if (ptxOld)
         EraseFromWallets(ptxOld->GetHash());
 
-    printf("CTxMemPool::accept() : accepted %s\n", hash.ToString().substr(0,10).c_str());
+	if (!fCheckInputs && !tx.IsData())
+		printf("CTxMemPool::accept() : accepted %s\n", hash.ToString().substr(0,10).c_str());
+	else
+		printf("CTxMemPool::accept() : accepted\n%s", tx.ToString().c_str());
+	
+	
+	//TODO do this in it's own thread that watches API for changes
+	if (fCheckInputs && tx.IsCoinAge()) //fCheckInputs if false only on loading transactions at boot, or rearranging transactions?
+	{
+        txnouttype whichType;
+		std::vector<valtype> vSolutions;
+		if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+			return true;
+		if (whichType == TX_PAPI)
+		{
+//			//	convert std::vector<unsigned char> to other usable type
+//			string url = string(vSolutions[1].begin(), vSolutions[1].end());
+//			uint64 tick = CBigNum(vSolutions[0]).getuint64();
+
+			
+			printf("***** create new TAPI??\n");
+			
+		//	get real URL data
+		uint64 data = time(NULL);
+		//printf("***** TAPI time[%lli]\n", data);
+		//printf("***** TAPI timeMod10[%lli]\n", data%30);
+		data /= 30;
+		//TODO switch to using only valtype to store data
+		printf("***** TAPI GetAPIData[%lli]\n", data);
+			
+		
+//			valtype api = vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
+		
+			//TODO mark as mine?? how to check signing of the transaction is me, then dont need to mark
+			// Wallet
+			CWalletTx wtx2;
+
+			CScript csTAPI;
+			csTAPI << OP_RETURN << OP_RETURN << CBigNum(data) << vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
+//			csTAPI << OP_RETURN << OP_RETURN << GetAPIData(api) << api;
+			
+
+			// Create
+			bool fCreated = pwalletMain->CreateDataTransaction(csTAPI, wtx2);
+			if (!fCreated)
+				return true;
+
+			//Solver(wtx2.vout[0].scriptPubKey, whichType, vSolutions);
+			//printf("***** TAPI<data>[%llu]\n", CBigNum(vSolutions[0]).getuint64());
+			//printf("***** TAPI<api>[%s]\n", string(vSolutions[1].begin(), vSolutions[1].end()).c_str());
+
+			// broadcast it
+			CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
+			if (!pwalletMain->CommitTransaction(wtx2, keyChange))
+				return true;
+			
+	
+		}
+	}
+	
+	
     return true;
 }
 
@@ -659,9 +1163,6 @@ bool CTxMemPool::addUnchecked(CTransaction &tx)
             mapNextTx[tx.vin[i].prevout] = CInPoint(&mapTx[hash], i);
         nTransactionsUpdated++;
     }
-	//TODO if PAPI, decode and add to CPAPIs
-	//TODO if MPE, decode and add to CPAPIs
-	//TODO if TAPI, decode and add to TAPIs
     return true;
 }
 
@@ -1002,7 +1503,7 @@ void CBlock::UpdateTime(const CBlockIndex* pindexPrev)
 bool CTransaction::DisconnectInputs(CTxDB& txdb)
 {
     // Relinquish previous transactions' spent pointers
-    if (!IsCoinBase())
+    if (!IsCoinBase() && !IsData())
     {
         BOOST_FOREACH(const CTxIn& txin, vin)
         {
@@ -1044,7 +1545,7 @@ bool CTransaction::FetchInputs(CTxDB& txdb, const map<uint256, CTxIndex>& mapTes
     // be dropped).  If tx is definitely invalid, fInvalid will be set to true.
     fInvalid = false;
 
-    if (IsCoinBase())
+    if (IsCoinBase() || IsData())
         return true; // Coinbase transactions have no inputs to fetch.
 
     for (unsigned int i = 0; i < vin.size(); i++)
@@ -1125,7 +1626,7 @@ const CTxOut& CTransaction::GetOutputFor(const CTxIn& input, const MapPrevTx& in
 
 int64 CTransaction::GetValueIn(const MapPrevTx& inputs) const
 {
-    if (IsCoinBase())
+    if (IsCoinBase() || IsData())
         return 0;
 
     int64 nResult = 0;
@@ -1160,7 +1661,7 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
     // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
     // fMiner is true when called from the internal bitcoin miner
     // ... both are false when called from CTransaction::AcceptToMemoryPool
-    if (!IsCoinBase())
+    if (!IsCoinBase() && !IsData()) //TODO does this really need to be here?
     {
         int64 nValueIn = 0;
         int64 nFees = 0;
@@ -1267,7 +1768,7 @@ bool CTransaction::ConnectInputs(CTxDB& txdb, MapPrevTx inputs,
 
 bool CTransaction::ClientConnectInputs()
 {
-    if (IsCoinBase())
+    if (IsCoinBase() || IsData())
         return false;
 
     // Take over previous transactions' spent pointers
@@ -1694,7 +2195,7 @@ bool CTransaction::GetCoinAge(CTxDB& txdb, uint64& nCoinAge) const
     CBigNum bnCentSecond = 0;  // coin age in the unit of cent-seconds
     nCoinAge = 0;
 
-    if (IsCoinBase())
+    if (IsCoinBase() || IsData())
         return true;
 
     BOOST_FOREACH(const CTxIn& txin, vin)
@@ -1985,7 +2486,7 @@ bool CBlock::AcceptBlock()
 
     // noocoin: check pending sync-checkpoint
     Checkpoints::AcceptPendingSyncCheckpoint();
-
+	
     return true;
 }
 
@@ -2073,10 +2574,14 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
         return true;
     }
 
+	if (pfrom) CalculatePCC(pblock); //if my own, then I already calculated
+	
+	//TODO ***check coinbase matches calculated PCC
+	
     // Store to disk
     if (!pblock->AcceptBlock())
         return error("ProcessBlock() : AcceptBlock FAILED");
-
+	
     // Recursively process any orphan blocks that depended on this one
     vector<uint256> vWorkQueue;
     vWorkQueue.push_back(hash);
@@ -3080,7 +3585,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if (tx.AcceptToMemoryPool(txdb, true, &fMissingInputs))
         {
             SyncWithWallets(tx, NULL, true);
-			printf("RecievedTransaction:\n%s", tx.ToString().c_str());
+			printf("RecievedTransaction: %s\n", tx.GetHash().ToString().c_str());
             RelayMessage(inv, vMsg);
             mapAlreadyAskedFor.erase(inv);
             vWorkQueue.push_back(inv.hash);
@@ -3710,13 +4215,9 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfS
             {
                 if (txCoinStake.nTime >= max(pindexPrev->GetMedianTimePast()+1, pindexPrev->GetBlockTime() - nMaxClockDrift))
                 {
-                    //pblock->vtx[0].vout[0].SetEmpty();
-					
-					//TODO get PCC, split up reward and add all outputs to coinbase here
-					pblock->vtx[0].vout.push_back(CTxOut(GetProofOfWorkReward(pblock->nBits), CScript() << reservekey.GetReservedKey() << OP_CHECKSIG));
-					
 					// make sure coinstake would meet timestamp protocol
                     // as it would be the same as the block timestamp
+                    //pblock->vtx[0].vout[0].SetEmpty();
                     pblock->vtx[0].nTime = txCoinStake.nTime;
                     pblock->vtx.push_back(txCoinStake);
                 }
@@ -3817,29 +4318,33 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfS
             if (tx.nTime > GetAdjustedTime() || (pblock->IsProofOfStake() && tx.nTime > pblock->vtx[1].nTime))
                 continue;
 
-            // noocoin: simplify transaction fee - allow free = false
-            int64 nMinFee = tx.GetMinFee(nBlockSize, false, GMF_BLOCK);
+			int64 nTxFees = 0;
+            if (!tx.IsData())
+			{
+				// noocoin: simplify transaction fee - allow free = false
+				int64 nMinFee = tx.GetMinFee(nBlockSize, false, GMF_BLOCK);
 
-            // Connecting shouldn't fail due to dependency on other memory pool transactions
-            // because we're already processing them in order of dependency
-            map<uint256, CTxIndex> mapTestPoolTmp(mapTestPool);
-            MapPrevTx mapInputs;
-            bool fInvalid;
-            if (!tx.FetchInputs(txdb, mapTestPoolTmp, false, true, mapInputs, fInvalid))
-                continue;
+				// Connecting shouldn't fail due to dependency on other memory pool transactions
+				// because we're already processing them in order of dependency
+				map<uint256, CTxIndex> mapTestPoolTmp(mapTestPool);
+				MapPrevTx mapInputs;
+				bool fInvalid;
+				if (!tx.FetchInputs(txdb, mapTestPoolTmp, false, true, mapInputs, fInvalid))
+					continue;
 
-            int64 nTxFees = tx.GetValueIn(mapInputs)-tx.GetValueOut();
-            if (nTxFees < nMinFee)
-                continue;
+				nTxFees = tx.GetValueIn(mapInputs)-tx.GetValueOut();
+				if (nTxFees < nMinFee)
+					continue;
 
-            nTxSigOps += tx.GetP2SHSigOpCount(mapInputs);
-            if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
-                continue;
+				nTxSigOps += tx.GetP2SHSigOpCount(mapInputs);
+				if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
+					continue;
 
-            if (!tx.ConnectInputs(txdb, mapInputs, mapTestPoolTmp, CDiskTxPos(1,1,1), pindexPrev, false, true))
-                continue;
-            mapTestPoolTmp[tx.GetHash()] = CTxIndex(CDiskTxPos(1,1,1), tx.vout.size());
-            swap(mapTestPool, mapTestPoolTmp);
+				if (!tx.ConnectInputs(txdb, mapInputs, mapTestPoolTmp, CDiskTxPos(1,1,1), pindexPrev, false, true))
+					continue;
+				mapTestPoolTmp[tx.GetHash()] = CTxIndex(CDiskTxPos(1,1,1), tx.vout.size());
+				swap(mapTestPool, mapTestPoolTmp);
+			}
 
             // Added
             pblock->vtx.push_back(tx);
@@ -3871,7 +4376,51 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfS
 
     }
     if (pblock->IsProofOfWork())
+	{
+		pblock->vtx[0].vout.resize(1);
+		pblock->vtx[0].vout[0].scriptPubKey << reservekey.GetReservedKey() << OP_CHECKSIG;
         pblock->vtx[0].vout[0].nValue = GetProofOfWorkReward(pblock->nBits);
+	}
+	//set our PCC coinbase
+    if (pblock->IsProofOfStake())
+	{
+		//TODO get PCC, split up reward and add all outputs to coinbase here
+		//pblock->vtx[0].vout[0].nValue = GetProofOfWorkReward(pblock->nBits);
+//		CScript csPayment;
+//		csPayment << reservekey.GetReservedKey() << OP_CHECKSIG;
+//		pblock->vtx[0].vout.push_back(CTxOut(GetProofOfWorkReward(pblock->nBits), csPayment));
+
+		CalculatePCC(pblock.get());
+		
+		int64 nTotalPayout = GetProofOfWorkReward(pblock->nBits);
+
+//		int num = 2;
+//		loop
+//		{
+//			if (num-- <= 0) break;
+//			CScript csPayment;
+//			csPayment << reservekey.GetReservedKey() << OP_CHECKSIG;
+//			nTotalPayout /= 2;
+//			pblock->vtx[0].vout.push_back(CTxOut(nTotalPayout, csPayment));
+//		}
+		
+		uint64 numPayouts = mapCPCC[pblock->GetHash()].size();
+		if (numPayouts > 0)
+		{
+			nTotalPayout /= numPayouts;
+			BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, mapCPCC[pblock->GetHash()])
+			{
+				pblock->vtx[0].vout.push_back(CTxOut(nTotalPayout, pMP.first));
+				//printf("\t\tpayto[%s] shares[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
+			}
+		}
+
+		if (pblock->vtx[0].vout.empty())
+		{
+			pblock->vtx[0].vout.resize(1);
+			pblock->vtx[0].vout[0].SetEmpty();
+		}
+	}
 
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();

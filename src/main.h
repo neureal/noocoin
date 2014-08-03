@@ -16,6 +16,7 @@
 
 #include <list>
 
+class CTAPI;
 class CWallet;
 class CBlock;
 class CBlockIndex;
@@ -87,6 +88,11 @@ extern CCriticalSection cs_setpwalletRegistered;
 extern std::set<CWallet*> setpwalletRegistered;
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
 
+extern std::map<unsigned int, CTAPI> mapCTAPIs; //TODO change to std::vector<unsigned char>
+extern std::map<uint64, int64> mapCPAPIs;
+extern std::map<uint64, std::vector<std::pair<CScript, uint64> > > mapCMPEs; //TODO change to std::vector<unsigned char>
+extern std::map<uint256, std::vector<std::pair<CScript, uint64 > > > mapCPCC;
+
 // Settings
 extern int64 nTransactionFee;
 
@@ -133,6 +139,33 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake);
 
 
 
+
+
+bool CompareMPEs(const std::pair<CScript, uint64>& first, const std::pair<CScript, uint64>& second);
+void CalculatePCC(CBlock* pblock);
+bool AcceptTAPI(unsigned int nTime, const valtype& vData);
+valtype GetAPIData(const valtype& url);
+
+//CTAPI
+//	paid?
+//	TAPI data
+//	PAPI payment total
+//	list of MPEs
+//		payto
+//		data
+class CTAPI
+{
+public:
+    bool paid;
+	uint64 data; //TODO change to std::vector<unsigned char>
+	int64 payment;
+	std::vector<std::pair<CScript, uint64> > MPEs; //TODO change to std::vector<unsigned char>
+
+    CTAPI() { SetNull(); }
+    CTAPI(uint64 dataIn) { SetNull(); data = dataIn; } //TODO change to std::vector<unsigned char>
+    //void SetNull() { paid = false; data = 0; payment = -1; MPEs.clear(); }
+    void SetNull() { paid = false; data = 0; payment = 0; }
+};
 
 bool GetWalletFile(CWallet* pwallet, std::string &strWalletFileOut);
 
@@ -433,7 +466,7 @@ class CTransaction
 {
 public:
     int nVersion;
-    unsigned int nTime;
+    unsigned int nTime; //TODO make into int64
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
     unsigned int nLockTime;
@@ -539,6 +572,13 @@ public:
         // noocoin: is this one of the new coinage payment transactions that have a data payload?
 		//TODO check for coinage payment back to self, second output key matches first input key
         return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() == 2 && vout[0].nValue == 0 && vout[1].nValue > MIN_TXOUT_AMOUNT);
+    }
+	
+    bool IsData() const
+    {
+        // noocoin: is this one of the new data only transactions?
+		//TODO make IsData() more secure
+        return (vin.empty() && (vout.size() == 1 && vout[0].nValue == 0));
     }
 
     /** Check for standard transaction types
@@ -699,7 +739,7 @@ public:
     std::string ToString() const
     {
         std::string str;
-        str += IsCoinBase()? "Coinbase" : (IsCoinStake()? "Coinstake" : (IsCoinAge()? "Coinage" : "CTransaction"));
+        str += IsCoinBase()? "Coinbase" : (IsCoinStake()? "Coinstake" : (IsCoinAge()? "Coinage" : (IsData()? "Data" : "CTransaction")));
         str += strprintf("(hash=%s, nTime=%d, ver=%d, vin.size=%d, vout.size=%d, nLockTime=%d)\n",
             GetHash().ToString().substr(0,10).c_str(),
             nTime,
@@ -1831,6 +1871,7 @@ public:
     mutable CCriticalSection cs;
     std::map<uint256, CTransaction> mapTx;
     std::map<COutPoint, CInPoint> mapNextTx;
+    //std::map<uint256, CTransaction> mapCPAPIs;
 
     bool accept(CTxDB& txdb, CTransaction &tx,
                 bool fCheckInputs, bool* pfMissingInputs);
