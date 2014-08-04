@@ -931,8 +931,15 @@ Value submitwork(const Array& params, bool fHelp)
 //	//unsigned int testuint = CBigNum(vchData).getuint();
 //	printf("*****test CBigNumLittleEnd[%llu]\n", CBigNum(vchData).getuint64()); //doesn't work
 //    std::reverse(vchData.begin(), vchData.end());
+//	uint64 data = CBigNum(vchData).getuint64();
+//	valtype ret = CBigNum(data).getvch();
 //	printf("*****test CBigNumBigEnd[%llu]\n", CBigNum(vchData).getuint64()); //works
-//	printf("*****test HexStr[%s]\n", HexStr(vchData.begin(), vchData.end(), true).c_str());
+//	printf("*****test HexStrO[%s]\n", HexStr(vchData.begin(), vchData.end()).c_str());
+//	printf("*****test HexStrC[%s]\n", HexStr(ret.begin(), ret.end()).c_str());
+	
+//	valtype api = vector<unsigned char>(strApi.begin(), strApi.end());
+//	valtype data = GetAPIData(api);
+//	printf("*****test GetAPIData[%s]\n", HexStr(data.begin(), data.end()).c_str());
 	
     // Wallet
     CWalletTx wtx;
@@ -949,7 +956,7 @@ Value submitwork(const Array& params, bool fHelp)
         throw JSONRPCError(-4, "Transaction creation failed");
     }
 	
-	//printf("***** wtx\n%s", wtx.ToString().c_str());
+//	printf("***** wtx\n%s", wtx.ToString().c_str());
     // Send
 	CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
     if (!pwalletMain->CommitTransaction(wtx, keyChange))
@@ -1144,7 +1151,6 @@ Value getcoinage(const Array& params, bool fHelp)
 	
 	
 //	//*****match TAPIs and MPEs in blocks
-//	//TODO use to thoroughly scan blockchain and check for correct coinbases
 	
 //	//scan wallet db
 //    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); it++)
@@ -1301,7 +1307,7 @@ Value getcoinage(const Array& params, bool fHelp)
 //		pindex = pindex->pnext;
 //    }
 	
-	list<pair<CScript, uint64> > testList;
+//	list<pair<CScript, uint64> > testList;
 	
 //	//print out maps
 //    map<unsigned int, CTAPI> mapCTAPIs;
@@ -1313,20 +1319,20 @@ Value getcoinage(const Array& params, bool fHelp)
 	for (map<unsigned int, CTAPI>::iterator it = mapCTAPIs.begin(); it != mapCTAPIs.end(); it++)
 	{
 		unsigned int timestamp = (*it).first;
-		bool paid = (*it).second.paid;
-		uint64 data = (*it).second.data;
+		valtype data = (*it).second.data;
 		int64 payment = (*it).second.payment;
-		printf("\ttick[%llu] timestamp[%llu] paid?[%d] data[%llu] payment[%s]\n", tickIdxTest, timestamp, paid, data, FormatMoney(payment).c_str());
+		printf("\ttick[%llu] timestamp[%llu] data[%s] payment[%s]\n", tickIdxTest, timestamp, HexStr(data).c_str(), FormatMoney(payment).c_str());
 		
-		vector<pair<CScript, uint64> > vMPs = (*it).second.MPEs;
-		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, vMPs)
+		vector<pair<CScript, valtype> > vMPs = (*it).second.MPEs;
+		BOOST_FOREACH (PAIRTYPE(CScript, valtype) pMP, vMPs)
 		{
 			//testList.push_back(pMP);
-			//uint64 diff = llabs(data - pMP.second);
-			testList.push_back(make_pair(pMP.first, llabs(data - pMP.second)));
-			//printf("\t\tpayto[%s] data[%llu] guess[%llu] diff[%llu]\n", pMP.first.ToString().c_str(), data, pMP.second, diff);
+			//TODO use datatype to figure closeness
+//			uint64 diff = llabs(CBigNum(data).getuint64() - CBigNum(pMP.second).getuint64());
+//			testList.push_back(make_pair(pMP.first, diff));
+//			printf("\t\tpayto[%s] data[%llu] guess[%llu] diff[%llu]\n", pMP.first.ToString().c_str(), CBigNum(data).getuint64(), CBigNum(pMP.second).getuint64(), diff);
 			
-			printf("\t\tpayto[%s] guess[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
+			printf("\t\tpayto[%s] guess[%s]\n", pMP.first.ToString().c_str(), HexStr(pMP.second).c_str());
 		}
 		tickIdxTest++;
 	}
@@ -1340,18 +1346,18 @@ Value getcoinage(const Array& params, bool fHelp)
 	}
 	
 	printf("***** mapCMPEs\n");
-	for (map<uint64, vector<pair<CScript, uint64> > >::iterator it = mapCMPEs.begin(); it != mapCMPEs.end(); it++)
+	for (map<uint64, vector<pair<CScript, valtype> > >::iterator it = mapCMPEs.begin(); it != mapCMPEs.end(); it++)
 	{
 		uint64 tick = (*it).first;
-		vector<pair<CScript, uint64> > vMPs = (*it).second;
+		vector<pair<CScript, valtype> > vMPs = (*it).second;
 
 		printf("\ttick[%llu]\n", tick);
 //		printf("\tfirst[%s]\n", vMPs[0].first.ToString().c_str());
 //		printf("\tsecnd[%s]\n", HexStr(vMPs[0].second).c_str());
 
-		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, vMPs)
+		BOOST_FOREACH (PAIRTYPE(CScript, valtype) pMP, vMPs)
 		{
-			printf("\t\tpayto[%s] data[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
+			printf("\t\tpayto[%s] data[%s]\n", pMP.first.ToString().c_str(), HexStr(pMP.second).c_str());
 		}
 	}
 
@@ -1363,7 +1369,7 @@ Value getcoinage(const Array& params, bool fHelp)
 //	testList.sort(CompareMPEs);
 //	for (list<pair<CScript, uint64> >::iterator it = testList.begin(); it != testList.end(); ++it)
 //		printf("payto[%s] sort data[%llu]\n", (*it).first.ToString().c_str(), (*it).second);
-//
+
 //	int shares = 1;
 //	for (list<pair<CScript, uint64> >::iterator it = testList.begin(); it != testList.end() && shares > 0; ++it)
 //	{

@@ -78,7 +78,7 @@ map<uint64, int64> mapCPAPIs;
 //vCMPE
 //	payto
 //	data
-map<uint64, vector<pair<CScript, uint64> > > mapCMPEs; //TODO change to valtype
+map<uint64, vector<pair<CScript, valtype> > > mapCMPEs;
 //mapCMPEs[x].push_back(make_pair(scriptPubKey, data));
 
 
@@ -532,7 +532,7 @@ bool CTransaction::CheckTransaction() const
 }
 
 
-bool CompareMPEs(const std::pair<CScript, uint64>& first, const std::pair<CScript, uint64>& second)  //TODO change to valtype
+bool CompareMPEs(const std::pair<CScript, uint64>& first, const std::pair<CScript, uint64>& second)
 {
   return ( first.second < second.second );
 }
@@ -552,7 +552,7 @@ valtype GetAPIData(const valtype& url)
 	ret = CBigNum(data).getvch();
 	
 	
-	printf("***** GetAPIData[%s]\n", HexStr(ret.begin(), ret.end()).c_str());
+	printf("***** GetAPIData[%s]\n", HexStr(ret).c_str());
 	return ret;
 }
 
@@ -574,7 +574,7 @@ void CalculatePCC(CBlock* pblock)
 		{
 			//TODO add more checks to reject block if TAPIs are not right
 			if (!mapCTAPIs.count(tx.nTime))
-			mapCTAPIsTmp[tx.nTime] = CTAPI(CBigNum(vSolutions[0]).getuint64()); //TODO change to just vSolutions[0]
+			mapCTAPIsTmp[tx.nTime] = CTAPI(vSolutions[0]);
 		}
 	}
 	
@@ -597,7 +597,7 @@ void CalculatePCC(CBlock* pblock)
 		}
 
 		//add any stored future MPEs that match the new ticks
-		map<uint64, vector<pair<CScript, uint64> > >::iterator itM = mapCMPEs.find(tickIdx);
+		map<uint64, vector<pair<CScript, valtype> > >::iterator itM = mapCMPEs.find(tickIdx);
 		if (itM != mapCMPEs.end())
 		{
 			mapCTAPIs[idx].MPEs = (*itM).second;
@@ -636,7 +636,6 @@ void CalculatePCC(CBlock* pblock)
 		if (whichType == TX_MPE)
 		{
 			uint64 tick = CBigNum(vSolutions[0]).getuint64();
-			uint64 data = CBigNum(vSolutions[1]).getuint64(); //TODO change to valtype and only decode when checking closeness
 			CScript payto;
 			payto = tx.vout[1].scriptPubKey;
 			//*****find absolute tick-index	
@@ -645,10 +644,10 @@ void CalculatePCC(CBlock* pblock)
 			if (it == mapCTAPIs.end()) //prediction for future (unknown yet) tick, add to mapCMPEs
 			{
 				tick += mapCTAPIs.size(); //make absolute
-				mapCMPEs[tick].push_back(make_pair(payto, data));
+				mapCMPEs[tick].push_back(make_pair(payto, vSolutions[1]));
 			}
 			else
-				(*it).second.MPEs.push_back(make_pair(payto, data));
+				(*it).second.MPEs.push_back(make_pair(payto, vSolutions[1]));
 		}
 	}
 
@@ -663,15 +662,18 @@ void CalculatePCC(CBlock* pblock)
 		
 		if (mapCTAPIs[idx].MPEs.size() == 0) continue; //no predictions for tick
 		
-		uint64 data = mapCTAPIs[idx].data; //the real api data
+		valtype data = mapCTAPIs[idx].data; //the real api data
 		
 		//TODO inverse proportion closeness??
 		
 		//sort so we can split coinbase
-		list<pair<CScript, uint64> > canidates; //TODO make this valtype and check for validity
-		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, mapCTAPIs[idx].MPEs)
+		list<pair<CScript, uint64> > canidates;
+		BOOST_FOREACH (PAIRTYPE(CScript, valtype) pMP, mapCTAPIs[idx].MPEs)
 		{
-			canidates.push_back(make_pair(pMP.first, llabs(data - pMP.second)));
+			//TODO use datatype to figure closeness
+			uint64 closeness = llabs(CBigNum(data).getuint64() - CBigNum(pMP.second).getuint64());
+			
+			canidates.push_back(make_pair(pMP.first, closeness));
 		}
 		canidates.sort(CompareMPEs);
 		
@@ -697,7 +699,7 @@ void CalculatePCC(CBlock* pblock)
 }
 
 //check a TAPI to see if it is an acceptable tick
-bool AcceptTAPI(unsigned int nTime, const valtype& vData)
+bool AcceptTAPI(unsigned int nTime, const valtype& vData, const valtype& vAPI)
 {
 	//TODO must limit TAPIs to deter flooding
 	//TODO if TAPI, decode and check validity
@@ -706,7 +708,7 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData)
 	//			no = get real API value from URL
 	//			does it match? no = reject, yes = accept
 
-	uint64 data = CBigNum(vData).getuint64(); //TODO change to just vSolutions[0]
+	//uint64 data = CBigNum(vData).getuint64();
 
 	//****find where this sits in mempool tick order and throw it out if equal timestamp or matches data on either side
 	
@@ -730,7 +732,7 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData)
 				continue;
 			if (whichType == TX_TAPI)
 			{
-				mapCTAPIsMemP[tx.nTime] = CTAPI(CBigNum(vSolutions[0]).getuint64()); //TODO change to just vSolutions[0]
+				mapCTAPIsMemP[tx.nTime] = CTAPI(vSolutions[0]);
 			}
 		}
 	
@@ -741,7 +743,7 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData)
 		if (nTime == (*it).first) 
 			return false;
 		//tick after: same api-id and 2 consecutive ticks can't have the same data
-		if (it != mapCTAPIsMemP.end() && data == (*it).second.data) //TODO should I replace the tick after with this one that is earlier instead?
+		if (it != mapCTAPIsMemP.end() && vData == (*it).second.data) //TODO should I replace the tick after with this one that is earlier instead?
 			return false;
 
 		//TODO only insert older data if there are enough signatures or enough payment
@@ -750,16 +752,16 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData)
 		if (it != mapCTAPIsMemP.begin())
 		{
 			it--;
-			if (data == (*it).second.data)
+			if (vData == (*it).second.data)
 				return false;
 			//new current tick, check value with real API that is has actually changed from last tick
 			if (it == mapCTAPIsMemP.end())
 			{
-				uint64 dataCheck = time(NULL);
-				dataCheck /= 30;
-				printf("***** TAPI new tick, check data[%lli]\n", dataCheck);
+//				uint64 dataCheck = time(NULL);
+//				dataCheck /= 30;
+//				printf("***** TAPI new tick, check data[%lli]\n", dataCheck);
 				
-				if (dataCheck == (*it).second.data)
+				if (GetAPIData(vAPI) == (*it).second.data)
 					return false;
 			}
 			//++it;
@@ -768,13 +770,13 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData)
 			//first TAPI in mempool
 			map<unsigned int, CTAPI>::reverse_iterator it2 = mapCTAPIs.rbegin();
 			//only add if within mempool range, not blockchain and different data than last blockchain TAPI
-			if (it2 != mapCTAPIs.rend() && (nTime <= (*it2).first || data == (*it2).second.data))
+			if (it2 != mapCTAPIs.rend() && (nTime <= (*it2).first || vData == (*it2).second.data))
 				return false;
 //			if (it == mapCTAPIs.rend()) //first TAPI ever!
 //				return true;
 		}
 
-		//mapCTAPIs[nTime] = CTAPI(data); //TODO change to valtype
+		//mapCTAPIs[nTime] = CTAPI(vData);
 		//printf("********TAPI added to mapCTAPIs");
 
 	}
@@ -935,7 +937,7 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
 		if (whichType == TX_TAPI)
 		{
 			printf("***** TAPI accepting into mempool\n");
-			if (!AcceptTAPI(tx.nTime, vSolutions[0]))
+			if (!AcceptTAPI(tx.nTime, vSolutions[0], vSolutions[1]))
 				return false;
 		}
 		
@@ -1103,24 +1105,15 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
 			
 			printf("***** create new TAPI??\n");
 			
-		//	get real URL data
-		uint64 data = time(NULL);
-		//printf("***** TAPI time[%lli]\n", data);
-		//printf("***** TAPI timeMod10[%lli]\n", data%30);
-		data /= 30;
-		//TODO switch to using only valtype to store data
-		printf("***** TAPI GetAPIData[%lli]\n", data);
-			
-		
-//			valtype api = vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
+			valtype api = vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
 		
 			//TODO mark as mine?? how to check signing of the transaction is me, then dont need to mark
 			// Wallet
 			CWalletTx wtx2;
 
 			CScript csTAPI;
-			csTAPI << OP_RETURN << OP_RETURN << CBigNum(data) << vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
-//			csTAPI << OP_RETURN << OP_RETURN << GetAPIData(api) << api;
+//			csTAPI << OP_RETURN << OP_RETURN << CBigNum(data) << vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
+			csTAPI << OP_RETURN << OP_RETURN << GetAPIData(api) << api;
 			
 
 			// Create

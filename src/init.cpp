@@ -461,6 +461,7 @@ bool AppInit2(int argc, char* argv[])
 	
 
 	//get all TAPI from blockchain
+	//TODO switch this to use CalculatePCC
     CBlockIndex* pindex = pindexGenesisBlock;
 	while (pindex)
 	{
@@ -480,13 +481,12 @@ bool AppInit2(int argc, char* argv[])
 			if (whichType == TX_TAPI)
 			{
 				if (!mapCTAPIs.count(tx.nTime)) //leave first in blockchain on conflict
-					mapCTAPIs[tx.nTime] = CTAPI(CBigNum(vSolutions[0]).getuint64()); //TODO change to just vSolutions[0]
+					mapCTAPIs[tx.nTime] = CTAPI(vSolutions[0]);
 			}
 		}
 		
 		pindex = pindex->pnext;
     }
-	
 	//get all PAPI and MPE from blockchain and integrate into mapCTAPI and mapCPAPIs/mapCMPEs
     pindex = pindexGenesisBlock;
 	while (pindex)
@@ -523,7 +523,6 @@ bool AppInit2(int argc, char* argv[])
 			if (whichType == TX_MPE)
 			{
 				uint64 tick = CBigNum(vSolutions[0]).getuint64();
-				uint64 data = CBigNum(vSolutions[1]).getuint64(); //TODO change to valtype and only decode when checking closeness
 				CScript payto;
 				payto = tx.vout[1].scriptPubKey;
 				//*****find absolute tick-index	
@@ -532,10 +531,10 @@ bool AppInit2(int argc, char* argv[])
 				if (it == mapCTAPIs.end()) //prediction for future (unknown yet) tick, add to mapCMPEs
 				{
 					tick += mapCTAPIs.size(); //make absolute
-					mapCMPEs[tick].push_back(make_pair(payto, data));
+					mapCMPEs[tick].push_back(make_pair(payto, vSolutions[1]));
 				}
 				else
-					(*it).second.MPEs.push_back(make_pair(payto, data));
+					(*it).second.MPEs.push_back(make_pair(payto, vSolutions[1]));
 			}
 		}
 		pindex = pindex->pnext;

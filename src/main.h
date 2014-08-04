@@ -88,9 +88,9 @@ extern CCriticalSection cs_setpwalletRegistered;
 extern std::set<CWallet*> setpwalletRegistered;
 extern std::map<uint256, CBlock*> mapOrphanBlocks;
 
-extern std::map<unsigned int, CTAPI> mapCTAPIs; //TODO change to std::vector<unsigned char>
+extern std::map<unsigned int, CTAPI> mapCTAPIs;
 extern std::map<uint64, int64> mapCPAPIs;
-extern std::map<uint64, std::vector<std::pair<CScript, uint64> > > mapCMPEs; //TODO change to std::vector<unsigned char>
+extern std::map<uint64, std::vector<std::pair<CScript, valtype> > > mapCMPEs;
 extern std::map<uint256, std::vector<std::pair<CScript, uint64 > > > mapCPCC;
 
 // Settings
@@ -143,7 +143,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake);
 
 bool CompareMPEs(const std::pair<CScript, uint64>& first, const std::pair<CScript, uint64>& second);
 void CalculatePCC(CBlock* pblock);
-bool AcceptTAPI(unsigned int nTime, const valtype& vData);
+bool AcceptTAPI(unsigned int nTime, const valtype& vData, const valtype& vAPI);
 valtype GetAPIData(const valtype& url);
 
 //CTAPI
@@ -156,15 +156,14 @@ valtype GetAPIData(const valtype& url);
 class CTAPI
 {
 public:
-    bool paid;
-	uint64 data; //TODO change to std::vector<unsigned char>
+	valtype data;
 	int64 payment;
-	std::vector<std::pair<CScript, uint64> > MPEs; //TODO change to std::vector<unsigned char>
+	std::vector<std::pair<CScript, valtype> > MPEs;
 
     CTAPI() { SetNull(); }
-    CTAPI(uint64 dataIn) { SetNull(); data = dataIn; } //TODO change to std::vector<unsigned char>
+    CTAPI(valtype dataIn) { SetNull(); data = dataIn; }
     //void SetNull() { paid = false; data = 0; payment = -1; MPEs.clear(); }
-    void SetNull() { paid = false; data = 0; payment = 0; }
+    void SetNull() { payment = 0; data.clear(); }
 };
 
 bool GetWalletFile(CWallet* pwallet, std::string &strWalletFileOut);
