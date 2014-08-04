@@ -58,6 +58,25 @@ Object JSONRPCError(int code, const string& message)
     return error;
 }
 
+//get real URL data
+valtype GetAPIData(const valtype& url)
+{
+	valtype ret;
+	//ret.clear();
+	
+	uint64 data = time(NULL);
+	//printf("***** TAPI time[%llu]\n", data);
+	//printf("***** TAPI timeMod10[%llu]\n", data%30);
+	data /= 30;
+	//printf("***** GetAPIData uint64[%llu]\n", data);
+	//uint64 data = CBigNum(vData).getuint64(); //TODO change to just vSolutions[0]
+	ret = CBigNum(data).getvch();
+	
+	
+	printf("***** GetAPIData[%s]\n", HexStr(ret).c_str());
+	return ret;
+}
+
 double GetDifficulty(const CBlockIndex* blockindex = NULL)
 {
     // Floating point number that is a multiple of the minimum difficulty,
@@ -937,8 +956,8 @@ Value submitwork(const Array& params, bool fHelp)
 //	printf("*****test HexStrO[%s]\n", HexStr(vchData.begin(), vchData.end()).c_str());
 //	printf("*****test HexStrC[%s]\n", HexStr(ret.begin(), ret.end()).c_str());
 	
-//	valtype api = vector<unsigned char>(strApi.begin(), strApi.end());
-//	valtype data = GetAPIData(api);
+	valtype api = vector<unsigned char>(strApi.begin(), strApi.end());
+	valtype data = GetAPIData(api);
 //	printf("*****test GetAPIData[%s]\n", HexStr(data.begin(), data.end()).c_str());
 	
     // Wallet

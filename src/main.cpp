@@ -537,25 +537,6 @@ bool CompareMPEs(const std::pair<CScript, uint64>& first, const std::pair<CScrip
   return ( first.second < second.second );
 }
 
-//get real URL data
-valtype GetAPIData(const valtype& url)
-{
-	valtype ret;
-	//ret.clear();
-	
-	uint64 data = time(NULL);
-	//printf("***** TAPI time[%lli]\n", data);
-	//printf("***** TAPI timeMod10[%lli]\n", data%30);
-	data /= 30;
-	//printf("***** GetAPIData uint64[%lli]\n", data);
-	//uint64 data = CBigNum(vData).getuint64(); //TODO change to just vSolutions[0]
-	ret = CBigNum(data).getvch();
-	
-	
-	printf("***** GetAPIData[%s]\n", HexStr(ret).c_str());
-	return ret;
-}
-
 void CalculatePCC(CBlock* pblock)
 {
 	//gather and sort new TAPIs that are in this block
