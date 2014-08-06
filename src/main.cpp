@@ -2575,7 +2575,8 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
         }
         mapOrphanBlocksByPrev.erase(hashPrev);
     }
-
+	
+	pblock->print();
     printf("ProcessBlock: ACCEPTED\n");
 
     // noocoin: if responsible for sync-checkpoint send it
@@ -4485,7 +4486,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     //// debug print
     printf("BitcoinMiner:\n");
     printf("new block found  \n  hash: %s  \ntarget: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
-    pblock->print();
+    //pblock->print();
     printf("%s ", DateTimeStrFormat(GetTime()).c_str());
     printf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue).c_str());
 
