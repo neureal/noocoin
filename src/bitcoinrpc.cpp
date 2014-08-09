@@ -65,6 +65,9 @@ valtype GetAPIData(const valtype& url)
 	valtype ret;
 	//ret.clear();
 	
+//	std::string sUrl = string(url.begin(), url.end());
+//	printf("***** GetAPIData url[%s]\n", sUrl.c_str());
+	
 	uint64 data = time(NULL);
 	//printf("***** TAPI time[%llu]\n", data);
 	//printf("***** TAPI timeMod10[%llu]\n", data%30);
@@ -73,6 +76,48 @@ valtype GetAPIData(const valtype& url)
 	//uint64 data = CBigNum(vData).getuint64(); //TODO change to just vSolutions[0]
 	ret = CBigNum(data).getvch();
 	
+	
+//	// Connect to localhost
+//	asio::io_service io_service;
+//	ssl::context context(io_service, ssl::context::sslv23);
+//	context.set_options(ssl::context::no_sslv2);
+//	SSLStream sslStream(io_service, context);
+//	SSLIOStreamDevice d(sslStream, true);
+//	iostreams::stream<SSLIOStreamDevice> stream(d);
+//
+//	if (!d.connect(string(url.begin(), url.end()), "80"))
+//		throw runtime_error("couldn't connect to server");
+//
+//	map<string, string> mapRequestHeaders;
+//
+//	// HTTP basic authentication
+//	//string strUserPass64 = EncodeBase64(mapArgs["-rpcuser"] + ":" + mapArgs["-rpcpassword"]);
+//	//mapRequestHeaders["Authorization"] = string("Basic ") + strUserPass64;
+//
+//	// Send request
+//	string strRequest = JSONRPCRequest(strMethod, params, 1);
+//	string strPost = HTTPPost(strRequest, mapRequestHeaders);
+//	stream << strPost << std::flush;
+//
+//	// Receive reply
+//	map<string, string> mapHeaders;
+//	string strReply;
+//	int nStatus = ReadHTTP(stream, mapHeaders, strReply);
+//	if (nStatus == 401)
+//		throw runtime_error("incorrect rpcuser or rpcpassword (authorization failed)");
+//	else if (nStatus >= 400 && nStatus != 400 && nStatus != 404 && nStatus != 500)
+//		throw runtime_error(strprintf("server returned HTTP error %d", nStatus));
+//	else if (strReply.empty())
+//		throw runtime_error("no response from server");
+//
+//	// Parse reply
+//	Value valReply;
+//	if (!read_string(strReply, valReply))
+//		throw runtime_error("couldn't parse reply from server");
+//	const Object& reply = valReply.get_obj();
+//	if (reply.empty())
+//		throw runtime_error("expected reply to have result, error and id properties");
+
 	
 	printf("***** GetAPIData[%s]\n", HexStr(ret).c_str());
 	return ret;
