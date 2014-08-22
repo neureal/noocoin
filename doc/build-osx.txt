@@ -18,7 +18,7 @@ Modified for Noocoin by Jeff Larkin <jefflarkin@gmail.com>
 See readme-qt.rst for instructions on building Noocoin QT, the
 graphical user interface.
 
-Tested on 10.5 and 10.6 intel.  NOO is not supported because it's big-endian.
+Tested on 10.5 and 10.6 intel.  PPC is not supported because it's big-endian.
 
 All of the commands should be executed in Terminal.app.. it's in
 /Applications/Utilities
