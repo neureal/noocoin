@@ -12,7 +12,7 @@ Mac OS X bitcoind build instructions
 Laszlo Hanyecz <solar@heliacal.net>
 Douglas Huff <dhuff@jrbobdobbs.org>
 
-Modified for Noocoin by Jeff Larkin <jefflarkin@gmail.com>
+Modified for PPCoin by Jeff Larkin <jefflarkin@gmail.com>
 
 
 See readme-qt.rst for instructions on building Noocoin QT, the
