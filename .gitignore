@@ -29,6 +29,6 @@ dist
 *.app
 *.dmg
 
-nbproject
+nbproject/private
 obj
 obj-test
