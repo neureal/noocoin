@@ -30,5 +30,3 @@ dist
 *.dmg
 
 nbproject/private
-obj/*
-obj-test/*
