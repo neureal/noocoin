@@ -1068,6 +1068,48 @@ void ThreadDNSAddressSeed2(void* parg)
 
 
 
+void GetTAPIs()
+{
+//    CAddrDB adb;
+//    adb.WriteAddrman(addrman);
+}
+
+void ThreadGetTAPIs2(void* parg)
+{
+    vnThreadsRunning[THREAD_GETTAPIS]++;
+    while (!fShutdown)
+    {
+        GetTAPIs();
+        vnThreadsRunning[THREAD_GETTAPIS]--;
+        Sleep(30000);
+        vnThreadsRunning[THREAD_GETTAPIS]++;
+    }
+    vnThreadsRunning[THREAD_GETTAPIS]--;
+}
+
+void ThreadGetTAPIs(void* parg)
+{
+    IMPLEMENT_RANDOMIZE_STACK(ThreadGetTAPIs(parg));
+    try
+    {
+        ThreadGetTAPIs2(parg);
+    }
+    catch (std::exception& e) {
+        PrintException(&e, "ThreadGetTAPIs()");
+    }
+    printf("ThreadGetTAPIs exiting\n");
+}
+
+
+
+
+
+
+
+
+
+
+
 // Physical IP seeds: 32-bit IPv4 addresses: e.g. 178.33.22.32 = 0x201621b2
 unsigned int pnSeed[] =
 {
@@ -1673,6 +1715,10 @@ void StartNode(void* parg)
     // noocoin: mint proof-of-stake blocks in the background
     if (!CreateThread(ThreadStakeMinter, pwalletMain))
         printf("Error: CreateThread(ThreadStakeMinter) failed\n");
+	
+    // noocoin: get TAPIs to add to the mempool
+    if (!CreateThread(ThreadGetTAPIs, NULL))
+        printf("Error: CreateThread(ThreadGetTAPIs) failed\n");
 }
 
 bool StopNode()
@@ -1705,6 +1751,7 @@ bool StopNode()
     if (vnThreadsRunning[THREAD_ADDEDCONNECTIONS] > 0) printf("ThreadOpenAddedConnections still running\n");
     if (vnThreadsRunning[THREAD_DUMPADDRESS] > 0) printf("ThreadDumpAddresses still running\n");
     if (vnThreadsRunning[THREAD_MINTER] > 0) printf("ThreadStakeMinter still running\n");
+    if (vnThreadsRunning[THREAD_GETTAPIS] > 0) printf("ThreadGetTAPIs still running\n");
     while (vnThreadsRunning[THREAD_MESSAGEHANDLER] > 0 || vnThreadsRunning[THREAD_RPCSERVER] > 0)
         Sleep(20);
     Sleep(50);
