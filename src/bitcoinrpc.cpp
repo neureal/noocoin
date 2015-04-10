@@ -37,6 +37,8 @@ using namespace boost;
 using namespace boost::asio;
 using namespace json_spirit;
 
+Object  GetBitStampAPI();
+
 void ThreadRPCServer2(void* parg);
 
 // Key used by getwork/getblocktemplate miners.
@@ -1192,6 +1194,18 @@ Value getcoinage(const Array& params, bool fHelp)
             "If [account] is not specified, returns the server's total curently available coinage.\n"
             "If [account] is specified, returns the curently available coinage in the account. (TODO)");
 
+     Object reply = GetBitStampAPI();
+        const Value& last = find_value(reply, "last");
+         std::string strLast = "0";
+        if (last.type() == str_type)
+            strLast = last.get_str();
+
+         printf("BitStamp = %s\n",strLast.c_str());
+        //const Value& error  = find_value(reply, "error");
+        
+        
+        
+        
 //    if (params.size() == 0)
 //        return ValueFromAmount(pwalletMain->GetCoinageAvailable());
 	
@@ -1882,7 +1896,7 @@ Value sendfrom(const Array& params, bool fHelp)
         throw JSONRPCError(-5, "Invalid noocoin address");
     int64 nAmount = AmountFromValue(params[2]);
     if (nAmount < MIN_TXOUT_AMOUNT)
-        throw JSONRPCError(-101, "Send amount too small");
+         throw JSONRPCError(-101, "Send amount too small");
     int nMinDepth = 1;
     if (params.size() > 3)
         nMinDepth = params[3].get_int();
@@ -3432,6 +3446,22 @@ string HTTPPost(const string& strMsg, const map<string,string>& mapRequestHeader
 
     return s.str();
 }
+// a stripped down HTTPPost
+string HTTPGet(const string& strPath, const map<string,string>& mapRequestHeaders)
+{
+    ostringstream s;
+    // after trying multiple approaches, just used curl and the tracefile to find headers
+    s << "GET " << strPath << " HTTP/1.1\r\n";
+    s << "User-Agent: curl/7.35.0\r\n";
+    s << "Host: www.bitstamp.net\r\n";
+    s << "Accept: */*\r\n";
+
+    BOOST_FOREACH(const PAIRTYPE(string, string)& item, mapRequestHeaders)
+        s << item.first << ": " << item.second << "\r\n";
+    s << "\r\n";
+
+    return s.str();
+}
 
 string rfc1123Time()
 {
@@ -3891,6 +3921,54 @@ json_spirit::Value CRPCTable::execute(const std::string &strMethod, const json_s
 }
 
 
+
+Object GetBitStampAPI()
+{
+
+
+  bool fUseSSL = true;
+    asio::io_service io_service;
+    ssl::context context(io_service, ssl::context::sslv23);
+    context.set_options(ssl::context::no_sslv2);
+    SSLStream sslStream(io_service, context);
+    SSLIOStreamDevice d(sslStream, fUseSSL);
+    iostreams::stream<SSLIOStreamDevice> stream(d);
+    // hard coded ip address TODO
+    if (!d.connect("192.230.66.187","443"))
+        throw runtime_error("couldn't connect to server");
+
+    // HTTP basic authentication
+    //string strUserPass64 = EncodeBase64(mapArgs["-rpcuser"] + ":" + mapArgs["-rpcpassword"]);
+    map<string, string> mapRequestHeaders;
+    // mapRequestHeaders["Authorization"] = string("Basic ") + strUserPass64;
+
+    // Send request
+    //string strRequest = JSONRPCRequest(strMethod, params, 1);
+    string strGet = HTTPGet("/api/ticker/", mapRequestHeaders);
+    stream << strGet << std::flush;
+
+    // Receive reply
+    map<string, string> mapHeaders;
+    string strReply;
+    int nStatus = ReadHTTP(stream, mapHeaders, strReply);
+    if (nStatus == 401)
+        throw runtime_error("incorrect rpcuser or rpcpassword (authorization failed)");
+    else if (nStatus >= 400 && nStatus != 400 && nStatus != 404 && nStatus != 500)
+        throw runtime_error(strprintf("server returned HTTP error %d", nStatus));
+    else if (strReply.empty())
+        throw runtime_error("no response from server");
+
+    // Parse reply
+    Value valReply;
+    if (!read_string(strReply, valReply))
+        throw runtime_error("couldn't parse reply from server");
+    const Object& reply = valReply.get_obj();
+    if (reply.empty())
+        throw runtime_error("expected reply to have result, error and id properties");
+
+    return reply;
+}
+
 Object CallRPC(const string& strMethod, const Array& params)
 {
     if (mapArgs["-rpcuser"] == "" && mapArgs["-rpcpassword"] == "")
@@ -4069,7 +4147,7 @@ int CommandLineRPC(int argc, char *argv[])
         else
         {
             // Result
-            if (result.type() == null_type)
+	  if (result.type() == null_type)
                 strPrint = "";
             else if (result.type() == str_type)
                 strPrint = result.get_str();
