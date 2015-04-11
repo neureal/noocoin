@@ -633,7 +633,7 @@ void CalculatePCC(CBlock* pblock)
 	}
 
 	
-	//TODO calculate PCC for this block
+	//calculate PCC for this block
 	//which ticks in mapCTAPIs have already been paid? answer: ticks from other blocks
 	for (map<unsigned int, CTAPI>::iterator it = mapCTAPIsTmp.begin(); it != mapCTAPIsTmp.end(); it++)
 	{
@@ -1069,51 +1069,51 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
 	else
 		printf("CTxMemPool::accept() : accepted\n%s", tx.ToString().c_str());
 	
-	
-	//TODO do this in it's own thread that watches API for changes
-	if (fCheckInputs && tx.IsCoinAge()) //fCheckInputs if false only on loading transactions at boot, or rearranging transactions?
-	{
-        txnouttype whichType;
-		std::vector<valtype> vSolutions;
-		if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
-			return true;
-		if (whichType == TX_PAPI)
-		{
-//			//	convert std::vector<unsigned char> to other usable type
-//			string url = string(vSolutions[1].begin(), vSolutions[1].end());
-//			uint64 tick = CBigNum(vSolutions[0]).getuint64();
-
-			
-			printf("***** create new TAPI??\n");
-			
-			valtype api = vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
-		
-			//TODO mark as mine?? how to check signing of the transaction is me, then dont need to mark
-			// Wallet
-			CWalletTx wtx2;
-
-			CScript csTAPI;
-//			csTAPI << OP_RETURN << OP_RETURN << CBigNum(data) << vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
-			csTAPI << OP_RETURN << OP_RETURN << GetAPIData(api) << api;
-			
-
-			// Create
-			bool fCreated = pwalletMain->CreateDataTransaction(csTAPI, wtx2);
-			if (!fCreated)
-				return true;
-
-			//Solver(wtx2.vout[0].scriptPubKey, whichType, vSolutions);
-			//printf("***** TAPI<data>[%llu]\n", CBigNum(vSolutions[0]).getuint64());
-			//printf("***** TAPI<api>[%s]\n", string(vSolutions[1].begin(), vSolutions[1].end()).c_str());
-
-			// broadcast it
-			CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
-			if (!pwalletMain->CommitTransaction(wtx2, keyChange))
-				return true;
-			
-	
-		}
-	}
+//	
+//	//TODO do this in it's own thread that watches API for changes
+//	if (fCheckInputs && tx.IsCoinAge()) //fCheckInputs if false only on loading transactions at boot, or rearranging transactions?
+//	{
+//        txnouttype whichType;
+//		std::vector<valtype> vSolutions;
+//		if (!Solver(tx.vout[0].scriptPubKey, whichType, vSolutions))
+//			return true;
+//		if (whichType == TX_PAPI)
+//		{
+////			//	convert std::vector<unsigned char> to other usable type
+////			string url = string(vSolutions[1].begin(), vSolutions[1].end());
+////			uint64 tick = CBigNum(vSolutions[0]).getuint64();
+//
+//			
+//			printf("***** create new TAPI??\n");
+//			
+//			valtype api = vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
+//		
+//			//TODO mark as mine?? how to check signing of the transaction is me, then dont need to mark
+//			// Wallet
+//			CWalletTx wtx2;
+//
+//			CScript csTAPI;
+////			csTAPI << OP_RETURN << OP_RETURN << CBigNum(data) << vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
+//			csTAPI << OP_RETURN << OP_RETURN << GetAPIData(api) << api;
+//			
+//
+//			// Create
+//			bool fCreated = pwalletMain->CreateDataTransaction(csTAPI, wtx2);
+//			if (!fCreated)
+//				return true;
+//
+//			//Solver(wtx2.vout[0].scriptPubKey, whichType, vSolutions);
+//			//printf("***** TAPI<data>[%llu]\n", CBigNum(vSolutions[0]).getuint64());
+//			//printf("***** TAPI<api>[%s]\n", string(vSolutions[1].begin(), vSolutions[1].end()).c_str());
+//
+//			// broadcast it
+//			CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
+//			if (!pwalletMain->CommitTransaction(wtx2, keyChange))
+//				return true;
+//			
+//	
+//		}
+//	}
 	
 	
     return true;
@@ -2743,7 +2743,7 @@ bool LoadBlockIndex(bool fAllowNew)
 //	//much faster block creation for testing
 //	bnProofOfWorkLimit = CBigNum(~uint256(0) >> 24);//0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 //	nStakeMinAge = 60 * 5; // min age is 5 minutes
-//	nCoinbaseMaturity = 6; //number of confirms for PoW
+//	nCoinbaseMaturity = 2; //number of confirms for PoW
 //	bnInitialHashTarget = CBigNum(~uint256(0) >> 28);
 //	nModifierInterval = 20; // modifier interval is 20 seconds
 

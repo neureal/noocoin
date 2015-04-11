@@ -1005,7 +1005,7 @@ Value submitwork(const Array& params, bool fHelp)
 //	printf("*****test HexStrC[%s]\n", HexStr(ret.begin(), ret.end()).c_str());
 	
 	valtype api = vector<unsigned char>(strApi.begin(), strApi.end());
-	valtype data = GetAPIData(api);
+//	valtype data = GetAPIData(api);
 //	printf("*****test GetAPIData[%s]\n", HexStr(data.begin(), data.end()).c_str());
 	
     // Wallet

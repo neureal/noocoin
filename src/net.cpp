@@ -1070,18 +1070,52 @@ void ThreadDNSAddressSeed2(void* parg)
 
 void GetTAPIs()
 {
-//    CAddrDB adb;
-//    adb.WriteAddrman(addrman);
+	//TODO do this in it's own thread that watches API for changes
+//			//	convert std::vector<unsigned char> to other usable type
+//			string url = string(vSolutions[1].begin(), vSolutions[1].end());
+//			uint64 tick = CBigNum(vSolutions[0]).getuint64();
+
+			
+//			printf("***** create new TAPI??\n");
+			
+	//TODO loop through all the PAPIs to get urls, and then pull from all those data sources
+			valtype api(4);
+		
+			//TODO mark as mine?? how to check signing of the transaction is me, then dont need to mark
+			// Wallet
+			CWalletTx wtx2;
+
+			CScript csTAPI;
+//			csTAPI << OP_RETURN << OP_RETURN << CBigNum(data) << vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
+			csTAPI << OP_RETURN << OP_RETURN << GetAPIData(api) << api;
+			
+
+			// Create
+			bool fCreated = pwalletMain->CreateDataTransaction(csTAPI, wtx2);
+			if (!fCreated)
+				printf("***** GetTAPIs CreateDataTransaction failed\n");
+
+			//Solver(wtx2.vout[0].scriptPubKey, whichType, vSolutions);
+			//printf("***** TAPI<data>[%llu]\n", CBigNum(vSolutions[0]).getuint64());
+			//printf("***** TAPI<api>[%s]\n", string(vSolutions[1].begin(), vSolutions[1].end()).c_str());
+
+			// broadcast it
+			CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
+			if (!pwalletMain->CommitTransaction(wtx2, keyChange))
+				printf("***** GetTAPIs CommitTransaction failed\n");
+			
 }
 
 void ThreadGetTAPIs2(void* parg)
 {
+    printf("ThreadGetTAPIs started\n");
+	
     vnThreadsRunning[THREAD_GETTAPIS]++;
     while (!fShutdown)
     {
-        GetTAPIs();
+        //GetTAPIs();
         vnThreadsRunning[THREAD_GETTAPIS]--;
-        Sleep(30000);
+        Sleep(3000); //poll interval
         vnThreadsRunning[THREAD_GETTAPIS]++;
     }
     vnThreadsRunning[THREAD_GETTAPIS]--;
