@@ -695,7 +695,7 @@ void CalculatePCC(CBlock* pblock)
 }
 
 //check a TAPI to see if it is an acceptable tick
-bool AcceptTAPI(unsigned int nTime, const valtype& vData, const valtype& vAPI)
+bool AcceptTAPI(bool fCheckInputs, unsigned int nTime, const valtype& vData, const valtype& vAPI)
 {
 	//TODO must limit TAPIs to deter flooding
 	//TODO if TAPI, decode and check validity
@@ -761,7 +761,7 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData, const valtype& vAPI)
 //				dataCheck /= 30;
 //				printf("***** TAPI new tick, check data[%lli]\n", dataCheck);
 				
-				if (vData != GetAPIData(vAPI))
+				if (fCheckInputs && vData != GetAPIData(vAPI))
 					return false;
 			}
 			//++it;
@@ -937,7 +937,7 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
 		if (whichType == TX_TAPI)
 		{
 			printf("***** TAPI accepting into mempool\n");
-			if (!AcceptTAPI(tx.nTime, vSolutions[0], vSolutions[1]))
+			if (!AcceptTAPI(fCheckInputs, tx.nTime, vSolutions[0], vSolutions[1]))
 				return false;
 		}
 		
