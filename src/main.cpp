@@ -712,7 +712,7 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData, const valtype& vAPI)
 		LOCK2(cs_main, mempool.cs);
 
 		//gather and sort TAPIs in the mempool
-		//TODO use mapCTAPIsMemP to manage adding to this as they come in and remove when removed from mempool to make more efficient
+		//TODO use mapCTAPIsMemP to manage adding to this as they come in and remove when removed from mempool to make this function more efficient
 		map<unsigned int, CTAPI> mapCTAPIsMemP;
 		for (map<uint256, CTransaction>::iterator mi = mempool.mapTx.begin(); mi != mempool.mapTx.end(); ++mi)
 		{
@@ -733,23 +733,27 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData, const valtype& vAPI)
 		}
 	
 	
-		map<unsigned int, CTAPI>::iterator it = mapCTAPIsMemP.lower_bound(nTime);
+		map<unsigned int, CTAPI>::iterator it = mapCTAPIsMemP.lower_bound(nTime); //finds and points to same tick or tick after where it would be inserted
 
 		//no 2 with the same api-id can have the same timestamp, keep my data
 		if (nTime == (*it).first) 
 			return false;
+		
+		//TODO only insert older data (not new current tick) if there are enough signatures or enough payment
+//		if (it != mapCTAPIsMemP.end() && )
+//			return false;
+		
 		//tick after: same api-id and 2 consecutive ticks can't have the same data
 		if (it != mapCTAPIsMemP.end() && vData == (*it).second.data) //TODO should I replace the tick after with this one that is earlier instead?
 			return false;
 
-		//TODO only insert older data if there are enough signatures or enough payment
-
-		//tick before: same api-id and 2 consecutive ticks can't have the same data
 		if (it != mapCTAPIsMemP.begin())
 		{
 			it--;
+			//tick before: same api-id and 2 consecutive ticks can't have the same data
 			if (vData == (*it).second.data)
 				return false;
+			it++;
 			//new current tick, check value with real API that is has actually changed from last tick
 			if (it == mapCTAPIsMemP.end())
 			{
@@ -757,7 +761,7 @@ bool AcceptTAPI(unsigned int nTime, const valtype& vData, const valtype& vAPI)
 //				dataCheck /= 30;
 //				printf("***** TAPI new tick, check data[%lli]\n", dataCheck);
 				
-				if (GetAPIData(vAPI) == (*it).second.data)
+				if (vData != GetAPIData(vAPI))
 					return false;
 			}
 			//++it;
