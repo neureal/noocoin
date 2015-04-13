@@ -1078,8 +1078,13 @@ void GetTAPIs()
 			
 //			printf("***** create new TAPI??\n");
 			
-	//TODO loop through all the PAPIs to get urls, and then pull from all those data sources
-			valtype api(4);
+	//TODO loop through all the mapCAPIs to get urls, and then pull from all those data sources
+//	for (map<uint64, int64>::iterator it = mapCAPIs.begin(); it != mapCAPIs.end(); it++)
+//	{
+//		valtype api = (*it).first;
+//	}
+			string apiS = "https://www.bitstamp.net/api/ticker/";
+			valtype api = vector<unsigned char>(apiS.begin(), apiS.end());
 		
 			//TODO mark as mine?? how to check signing of the transaction is me, then dont need to mark
 			// Wallet
@@ -1093,7 +1098,7 @@ void GetTAPIs()
 			// Create
 			bool fCreated = pwalletMain->CreateDataTransaction(csTAPI, wtx2);
 			if (!fCreated)
-				printf("***** GetTAPIs CreateDataTransaction failed\n");
+				return;
 
 			//Solver(wtx2.vout[0].scriptPubKey, whichType, vSolutions);
 			//printf("***** TAPI<data>[%llu]\n", CBigNum(vSolutions[0]).getuint64());
@@ -1102,7 +1107,8 @@ void GetTAPIs()
 			// broadcast it
 			CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
 			if (!pwalletMain->CommitTransaction(wtx2, keyChange))
-				printf("***** GetTAPIs CommitTransaction failed\n");
+				//printf("***** GetTAPIs CommitTransaction failed\n");
+				return;
 			
 }
 
@@ -1113,9 +1119,9 @@ void ThreadGetTAPIs2(void* parg)
     vnThreadsRunning[THREAD_GETTAPIS]++;
     while (!fShutdown)
     {
-        //GetTAPIs();
+        GetTAPIs();
         vnThreadsRunning[THREAD_GETTAPIS]--;
-        Sleep(3000); //poll interval
+        Sleep(30000); //poll interval
         vnThreadsRunning[THREAD_GETTAPIS]++;
     }
     vnThreadsRunning[THREAD_GETTAPIS]--;

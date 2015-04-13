@@ -70,6 +70,7 @@ valtype GetAPIData(const valtype& url)
 //	std::string sUrl = string(url.begin(), url.end());
 //	printf("***** GetAPIData url[%s]\n", sUrl.c_str());
 	
+	//use time as datasource
 	uint64 data = time(NULL);
 	//printf("***** TAPI time[%llu]\n", data);
 	//printf("***** TAPI timeMod10[%llu]\n", data%30);
@@ -79,46 +80,13 @@ valtype GetAPIData(const valtype& url)
 	ret = CBigNum(data).getvch();
 	
 	
-//	// Connect to localhost
-//	asio::io_service io_service;
-//	ssl::context context(io_service, ssl::context::sslv23);
-//	context.set_options(ssl::context::no_sslv2);
-//	SSLStream sslStream(io_service, context);
-//	SSLIOStreamDevice d(sslStream, true);
-//	iostreams::stream<SSLIOStreamDevice> stream(d);
-//
-//	if (!d.connect(string(url.begin(), url.end()), "80"))
-//		throw runtime_error("couldn't connect to server");
-//
-//	map<string, string> mapRequestHeaders;
-//
-//	// HTTP basic authentication
-//	//string strUserPass64 = EncodeBase64(mapArgs["-rpcuser"] + ":" + mapArgs["-rpcpassword"]);
-//	//mapRequestHeaders["Authorization"] = string("Basic ") + strUserPass64;
-//
-//	// Send request
-//	string strRequest = JSONRPCRequest(strMethod, params, 1);
-//	string strPost = HTTPPost(strRequest, mapRequestHeaders);
-//	stream << strPost << std::flush;
-//
-//	// Receive reply
-//	map<string, string> mapHeaders;
-//	string strReply;
-//	int nStatus = ReadHTTP(stream, mapHeaders, strReply);
-//	if (nStatus == 401)
-//		throw runtime_error("incorrect rpcuser or rpcpassword (authorization failed)");
-//	else if (nStatus >= 400 && nStatus != 400 && nStatus != 404 && nStatus != 500)
-//		throw runtime_error(strprintf("server returned HTTP error %d", nStatus));
-//	else if (strReply.empty())
-//		throw runtime_error("no response from server");
-//
-//	// Parse reply
-//	Value valReply;
-//	if (!read_string(strReply, valReply))
-//		throw runtime_error("couldn't parse reply from server");
-//	const Object& reply = valReply.get_obj();
-//	if (reply.empty())
-//		throw runtime_error("expected reply to have result, error and id properties");
+//	Object reply = GetBitStampAPI();
+//	const Value& last = find_value(reply, "last");
+//	std::string strLast = "0";
+//	if (last.type() == str_type) strLast = last.get_str();
+
+	//printf("BitStamp = %s\n",strLast.c_str());
+	//const Value& error  = find_value(reply, "error");
 
 	
 	printf("***** GetAPIData[%s]\n", HexStr(ret).c_str());
@@ -823,6 +791,7 @@ Value verifymessage(const Array& params, bool fHelp)
     return (CBitcoinAddress(key.GetPubKey()) == addr);
 }
 
+// PAPI
 // A pure coinage spend transaction with burnt fees
 // First input scriptPubKeyHash matches single output
 Value submitvote(const Array& params, bool fHelp)
@@ -944,6 +913,7 @@ Value submitvote(const Array& params, bool fHelp)
     return wtx.GetHash().GetHex();
 }
 
+//MPE
 Value submitwork(const Array& params, bool fHelp)
 {
     if (pwalletMain->IsCrypted() && (fHelp || params.size() != 4))
@@ -1193,12 +1163,15 @@ Value getcoinage(const Array& params, bool fHelp)
             "getcoinage [account]\n"
             "If [account] is not specified, returns the server's total curently available coinage.\n"
             "If [account] is specified, returns the curently available coinage in the account. (TODO)");
-
+	
      Object reply = GetBitStampAPI();
         const Value& last = find_value(reply, "last");
          std::string strLast = "0";
         if (last.type() == str_type)
             strLast = last.get_str();
+		 
+//		int64 test = AmountFromValue(last);
+//		printf("BitStamp [%ll]\n", test);
 
          printf("BitStamp = %s\n",strLast.c_str());
         //const Value& error  = find_value(reply, "error");
@@ -1393,53 +1366,58 @@ Value getcoinage(const Array& params, bool fHelp)
 //    map<uint64, int64> mapCPAPIs;
 //    map<uint64, vector<pair<CScript, valtype> > > mapCMPEs;
 	
-	printf("***** mapCTAPIs\n");
-	uint64 tickIdxTest = 0;
-	for (map<unsigned int, CTAPI>::iterator it = mapCTAPIs.begin(); it != mapCTAPIs.end(); it++)
-	{
-		unsigned int timestamp = (*it).first;
-		valtype data = (*it).second.data;
-		int64 payment = (*it).second.payment;
-		printf("\ttick[%llu] timestamp[%llu] data[%s] payment[%s]\n", tickIdxTest, timestamp, HexStr(data).c_str(), FormatMoney(payment).c_str());
-		
-		vector<pair<CScript, valtype> > vMPs = (*it).second.MPEs;
-		BOOST_FOREACH (PAIRTYPE(CScript, valtype) pMP, vMPs)
-		{
-			//testList.push_back(pMP);
-			//TODO use datatype to figure closeness
-//			uint64 diff = llabs(CBigNum(data).getuint64() - CBigNum(pMP.second).getuint64());
-//			testList.push_back(make_pair(pMP.first, diff));
-//			printf("\t\tpayto[%s] data[%llu] guess[%llu] diff[%llu]\n", pMP.first.ToString().c_str(), CBigNum(data).getuint64(), CBigNum(pMP.second).getuint64(), diff);
-			
-			printf("\t\tpayto[%s] guess[%s]\n", pMP.first.ToString().c_str(), HexStr(pMP.second).c_str());
-		}
-		tickIdxTest++;
-	}
+//******************************************************
+//	printf("***** mapCTAPIs\n");
+//	uint64 tickIdxTest = 0;
+//	for (map<unsigned int, CTAPI>::iterator it = mapCTAPIs.begin(); it != mapCTAPIs.end(); it++)
+//	{
+//		unsigned int timestamp = (*it).first;
+//		valtype data = (*it).second.data;
+//		int64 payment = (*it).second.payment;
+//		printf("\ttick[%llu] timestamp[%llu] data[%s] payment[%s]\n", tickIdxTest, timestamp, HexStr(data).c_str(), FormatMoney(payment).c_str());
+//		
+//		vector<pair<CScript, valtype> > vMPs = (*it).second.MPEs;
+//		BOOST_FOREACH (PAIRTYPE(CScript, valtype) pMP, vMPs)
+//		{
+//			//testList.push_back(pMP);
+//			//TODO use datatype to figure closeness
+////			uint64 diff = llabs(CBigNum(data).getuint64() - CBigNum(pMP.second).getuint64());
+////			testList.push_back(make_pair(pMP.first, diff));
+////			printf("\t\tpayto[%s] data[%llu] guess[%llu] diff[%llu]\n", pMP.first.ToString().c_str(), CBigNum(data).getuint64(), CBigNum(pMP.second).getuint64(), diff);
+//			
+//			printf("\t\tpayto[%s] guess[%s]\n", pMP.first.ToString().c_str(), HexStr(pMP.second).c_str());
+//		}
+//		tickIdxTest++;
+//	}
 
-	printf("***** mapCPAPIs\n");
-	for (map<uint64, int64>::iterator it = mapCPAPIs.begin(); it != mapCPAPIs.end(); it++)
-	{
-		uint64 tick = (*it).first;
-		int64 total = (*it).second;
-		printf("\ttick[%llu] total[%s]\n", tick, FormatMoney(total).c_str());
-	}
+//******************************************************
+//	printf("***** mapCPAPIs\n");
+//	for (map<uint64, int64>::iterator it = mapCPAPIs.begin(); it != mapCPAPIs.end(); it++)
+//	{
+//		uint64 tick = (*it).first;
+//		int64 total = (*it).second;
+//		printf("\ttick[%llu] total[%s]\n", tick, FormatMoney(total).c_str());
+//	}
 	
-	printf("***** mapCMPEs\n");
-	for (map<uint64, vector<pair<CScript, valtype> > >::iterator it = mapCMPEs.begin(); it != mapCMPEs.end(); it++)
-	{
-		uint64 tick = (*it).first;
-		vector<pair<CScript, valtype> > vMPs = (*it).second;
+//******************************************************
+//	printf("***** mapCMPEs\n");
+//	for (map<uint64, vector<pair<CScript, valtype> > >::iterator it = mapCMPEs.begin(); it != mapCMPEs.end(); it++)
+//	{
+//		uint64 tick = (*it).first;
+//		vector<pair<CScript, valtype> > vMPs = (*it).second;
+//
+//		printf("\ttick[%llu]\n", tick);
+////		printf("\tfirst[%s]\n", vMPs[0].first.ToString().c_str());
+////		printf("\tsecnd[%s]\n", HexStr(vMPs[0].second).c_str());
+//
+//		BOOST_FOREACH (PAIRTYPE(CScript, valtype) pMP, vMPs)
+//		{
+//			printf("\t\tpayto[%s] data[%s]\n", pMP.first.ToString().c_str(), HexStr(pMP.second).c_str());
+//		}
+//	}
 
-		printf("\ttick[%llu]\n", tick);
-//		printf("\tfirst[%s]\n", vMPs[0].first.ToString().c_str());
-//		printf("\tsecnd[%s]\n", HexStr(vMPs[0].second).c_str());
-
-		BOOST_FOREACH (PAIRTYPE(CScript, valtype) pMP, vMPs)
-		{
-			printf("\t\tpayto[%s] data[%s]\n", pMP.first.ToString().c_str(), HexStr(pMP.second).c_str());
-		}
-	}
-
+	
+	
 //	//test sorting with list
 //	testList.sort();
 //	for (list<pair<CScript, uint64> >::iterator it = testList.begin(); it != testList.end(); ++it)
@@ -1456,19 +1434,21 @@ Value getcoinage(const Array& params, bool fHelp)
 //		shares--;
 //	}
 	
-	printf("***** mapCPCC\n");
-	for (map<uint256, vector<pair<CScript, uint64> > >::iterator it = mapCPCC.begin(); it != mapCPCC.end(); it++)
-	{
-		uint256 blockhash = (*it).first;
-		vector<pair<CScript, uint64> > vMPs = (*it).second;
-
-		printf("\tblockhash[%s]\n", blockhash.GetHex().c_str());
-
-		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, vMPs)
-		{
-			printf("\t\tpayto[%s] shares[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
-		}
-	}
+//******************************************************
+//	printf("***** mapCPCC\n");
+//	for (map<uint256, vector<pair<CScript, uint64> > >::iterator it = mapCPCC.begin(); it != mapCPCC.end(); it++)
+//	{
+//		uint256 blockhash = (*it).first;
+//		vector<pair<CScript, uint64> > vMPs = (*it).second;
+//
+//		printf("\tblockhash[%s]\n", blockhash.GetHex().c_str());
+//
+//		BOOST_FOREACH (PAIRTYPE(CScript, uint64) pMP, vMPs)
+//		{
+//			printf("\t\tpayto[%s] shares[%llu]\n", pMP.first.ToString().c_str(), pMP.second);
+//		}
+//	}
+	
 	
 //	map<unsigned int, CTAPI> mapCTAPIsTmp;
 //	mapCTAPIsTmp[1406530181] = CTAPI(23532);
@@ -3933,7 +3913,7 @@ Object GetBitStampAPI()
     SSLStream sslStream(io_service, context);
     SSLIOStreamDevice d(sslStream, fUseSSL);
     iostreams::stream<SSLIOStreamDevice> stream(d);
-    // hard coded ip address TODO
+    //TODO hard coded ip address
     if (!d.connect("192.230.66.187","443"))
         throw runtime_error("couldn't connect to server");
 

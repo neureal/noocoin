@@ -55,12 +55,23 @@ map<uint256, uint256> mapProofOfStake;
 map<uint256, CDataStream*> mapOrphanTransactions;
 map<uint256, map<uint256, CDataStream*> > mapOrphanTransactionsByPrev;
 
+
+////TODO setup critical section for these maps
+//{
+//	LOCK(cs);
+//	LOCK(cs_main);
+//	LOCK2(cs_main, mempool.cs);
+//	//LOCK2(cs_main, cs_wallet);
+//
+//{
+
 //mapCAPIs
 //	API string
 //vCAPI
 //	mapCPAPI
 //	mapCTAPI
 //	mapCMPE
+//map<valtype, CAPI> mapCAPIs;
 
 //mapCTAPIs (api ticks found so far)
 //	nTime - key, sort
@@ -601,6 +612,10 @@ void CalculatePCC(CBlock* pblock)
 			continue;
 		if (whichType == TX_PAPI)
 		{
+			//TODO where should new APIs be put in mapCAPIs?
+			//APIs are added only when we see a PAPI when, in the block or in mempool?
+			//when are APIs removed?
+//			valtype api = vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
 			uint64 tick = CBigNum(vSolutions[0]).getuint64();
 			int64 val = tx.vout[1].nValue;
 			//*****find absolute tick-index	
@@ -919,7 +934,7 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
 		{
 			printf("***** TAPI accepting into mempool\n");
 			if (!AcceptTAPI(tx.nTime, vSolutions[0], vSolutions[1]))
-				return false;
+				return true; //dont show we have error, we are going to get a lot of these
 		}
 		
 		fCheckInputs = false;
