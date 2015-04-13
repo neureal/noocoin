@@ -1104,6 +1104,7 @@ void GetTAPIs()
 			//printf("***** TAPI<data>[%llu]\n", CBigNum(vSolutions[0]).getuint64());
 			//printf("***** TAPI<api>[%s]\n", string(vSolutions[1].begin(), vSolutions[1].end()).c_str());
 
+			//TODO call AcceptTAPI now so we don't spam up the console
 			// broadcast it
 			CReserveKey keyChange(pwalletMain); //silly, but otherwise would have to copy and rewrite this function
 			if (!pwalletMain->CommitTransaction(wtx2, keyChange))

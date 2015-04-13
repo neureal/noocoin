@@ -934,7 +934,7 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
 		{
 			printf("***** TAPI accepting into mempool\n");
 			if (!AcceptTAPI(tx.nTime, vSolutions[0], vSolutions[1]))
-				return true; //dont show we have error, we are going to get a lot of these
+				return false;
 		}
 		
 		fCheckInputs = false;
