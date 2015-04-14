@@ -1,19 +1,23 @@
 
-Noocoin Official Development Repo
+Neureal Official Development Repo
 ==================================
 
 ### What is Noocoin?
-[Noocoin](http://noocoin.org/) (abbreviated NOO) is the first [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency) design introducing [proof-of-stake consensus](http://noocoin.org/bin/noocoin-paper.pdf) as a security model, with a combined [proof-of-stake](http://noocoin.org/bin/noocoin-paper.pdf)/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system) minting system. Noocoin is based on [Bitcoin](http://bitcoin.org/en/), while introducing many important innovations to cryptocurrency field including new security model, energy efficiency, better minting model and more adaptive response to rapid change in network computation power.
+Noocoin was the original branding of the Neureal project. It has changed but documentation still refers to noocoin when it should be Neureal.
 
-### Noocoin Resources
+
+### What is Neureal?
+[Neureal](http://neureal.net/) is the first [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency) design introducing [proof-of-stake consensus](http://noocoin.org/bin/noocoin-paper.pdf) as a security model, with a combined [proof-of-stake](http://noocoin.org/bin/noocoin-paper.pdf)/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system) minting system. Noocoin is based on [Bitcoin](http://bitcoin.org/en/), while introducing many important innovations to cryptocurrency field including new security model, energy efficiency, better minting model and more adaptive response to rapid change in network computation power.
+
+### Neureal Resourcse
 * Client and Source:
-[Client Binaries](http://sourceforge.net/projects/noocoin/files/),
-[Source Code](https://github.com/noocoin/noocoin)
-* Documentation: [Noocoin Whitepaper](http://noocoin.org/bin/noocoin-paper.pdf),
-[Noocoin Wiki](https://github.com/noocoin/noocoin/wiki)
-* Help: 
-[Forum](http://www.nootalk.org/),
-[Other Sites and Links...](http://www.noocointalk.org/index.php?topic=4.0;topicseen)
+[Source Code](https://github.com/neureal/noocoin)
+* Documentation: [Neureal Website](http://neureal.net),
+* Video: [How Neureal works](https://docs.google.com/file/d/0B5p19t3unCmgTF9mdlMyemxSWlE/edit)
+* Help: (http://www.reddit.com/r/neureal),
+[Reddit](http://www.reddit.com/r/neureal),
+[Other Sites and Links...] bitcointalk thread TODO
+
 
 Repo Guidelines
 ================================
