@@ -760,9 +760,11 @@ bool AcceptTAPI(bool fCheckInputs, unsigned int nTime, const valtype& vData, con
 //				uint64 dataCheck = time(NULL);
 //				dataCheck /= 30;
 //				printf("***** TAPI new tick, check data[%lli]\n", dataCheck);
-				
-				if (fCheckInputs && vData != GetAPIData(vAPI))
-					return false;
+			
+                                // The code below is very questionable. It adds an api call everytime someone receives
+                                // this TAPI ..  verify that the TAPI is within 10% range of last TAPI ? Discuss with Wil TODO
+//				if (fCheckInputs && vData != GetAPIData(vAPI))
+//					return false;
 			}
 			//++it;
 		} else

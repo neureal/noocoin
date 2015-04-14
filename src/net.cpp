@@ -1092,7 +1092,11 @@ void GetTAPIs()
 
 			CScript csTAPI;
 //			csTAPI << OP_RETURN << OP_RETURN << CBigNum(data) << vector<unsigned char>(vSolutions[1].begin(), vSolutions[1].end());
-			csTAPI << OP_RETURN << OP_RETURN << GetAPIData(api) << api;
+                        try {
+                            csTAPI << OP_RETURN << OP_RETURN << GetAPIData(api) << api;
+                        } catch ( ... ) {
+                            return; // this should catch the network problems and aborts creation of TAPIs
+                        }
 			
 
 			// Create

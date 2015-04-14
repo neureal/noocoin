@@ -3461,13 +3461,13 @@ string HTTPPost(const string& strMsg, const map<string,string>& mapRequestHeader
     return s.str();
 }
 // a stripped down HTTPPost
-string HTTPGet(const string& strPath, const map<string,string>& mapRequestHeaders)
+string HTTPGet(const string& strPath,const string& strHost,const map<string,string>& mapRequestHeaders)
 {
     ostringstream s;
     // after trying multiple approaches, just used curl and the tracefile to find headers
     s << "GET " << strPath << " HTTP/1.1\r\n";
     s << "User-Agent: curl/7.35.0\r\n";
-    s << "Host: www.bitstamp.net\r\n";
+    s << "Host: " << strHost << "\r\n";
     s << "Accept: */*\r\n";
 
     BOOST_FOREACH(const PAIRTYPE(string, string)& item, mapRequestHeaders)
@@ -3948,7 +3948,7 @@ Object GetBitStampAPI()
     SSLIOStreamDevice d(sslStream, fUseSSL);
     iostreams::stream<SSLIOStreamDevice> stream(d);
     //TODO hard coded ip address
-    if (!d.connect("192.230.66.187","443"))
+    if (!d.connect("www.bitstamp.net","443"))
         throw runtime_error("couldn't connect to server");
 
     // HTTP basic authentication
@@ -3958,7 +3958,7 @@ Object GetBitStampAPI()
 
     // Send request
     //string strRequest = JSONRPCRequest(strMethod, params, 1);
-    string strGet = HTTPGet("/api/ticker/", mapRequestHeaders);
+    string strGet = HTTPGet("/api/ticker/","www.bitstamp.net", mapRequestHeaders);
     stream << strGet << std::flush;
 
     // Receive reply
