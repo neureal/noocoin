@@ -736,7 +736,8 @@ bool AcceptTAPI(bool fCheckInputs, unsigned int nTime, const valtype& vData, con
 		map<unsigned int, CTAPI>::iterator it = mapCTAPIsMemP.lower_bound(nTime); //finds and points to same tick or tick after where it would be inserted
 
 		//no 2 with the same api-id can have the same timestamp, keep my data
-		if (nTime == (*it).first) 
+                // TODO perhaps consider some sort of averaging?
+		if ((nTime / 10) == ((*it).first) / 10) 
 			return false;
 		
 		//TODO only insert older data (not new current tick) if there are enough signatures or enough payment
@@ -761,10 +762,12 @@ bool AcceptTAPI(bool fCheckInputs, unsigned int nTime, const valtype& vData, con
 //				dataCheck /= 30;
 //				printf("***** TAPI new tick, check data[%lli]\n", dataCheck);
 			
-                                // The code below is very questionable. It adds an api call everytime someone receives
-                                // this TAPI ..  verify that the TAPI is within 10% range of last TAPI ? Discuss with Wil TODO
-//				if (fCheckInputs && vData != GetAPIData(vAPI))
-//					return false;
+                            try {
+				if (fCheckInputs && vData != GetAPIData(vAPI))
+					return false;
+                            } catch (...) {
+                                return false;
+                            }
 			}
 			//++it;
 		} else
