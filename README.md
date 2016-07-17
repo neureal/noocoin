@@ -1,6 +1,17 @@
 
 Neureal Official Development Repo
 ==================================
+###Installation
+The preferred installation is on a Debian Jessie 8.0 system. Other systems may work too, but you will want to be sure you are using libdb4.8++-dev
+```
+cd ~
+git clone https://github.com/neureal/noocoin.git
+cd ~/noocoin/src
+make
+./noocoind
+```
+(You may need to also configure your ~/.noocoin/noocoin.conf)
+
 
 ### What is Neureal?
 [Neureal](http://neureal.net/) is the first [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency) design introducing [proof-of-stake consensus] as a security model, with a combined [proof-of-stake]/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system) minting system. Neureal is based on [Bitcoin](http://bitcoin.org/en/), while introducing many important innovations to cryptocurrency field including new security model, energy efficiency, better minting model and more adaptive response to rapid change in network computation power.
