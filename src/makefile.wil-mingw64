@@ -5,14 +5,13 @@
 # file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
 # Windows commandline build procedure:
-# - Install MinGW following http://www.mingw.org/wiki/Getting_Started.
+# - Install MinGW following http://www.mingw.org/wiki/Getting_Started
+#	x86_64-4.9.1-release-posix-seh-rt_v3-rev0.7z
 #   Install with the C++ and MSYS options checked
 #
-# - Add/edit 'MAKE' environment variable with value '/c/MinGW32/bin/mingw32-make.exe'
-#
-# - Build openssl library version: 1.0.1b
+# - Build openssl library version: 1.0.1h
 #   download from  http://www.openssl.org/source/
-#   Extract to c:\openssl-1.0.1b-mgw
+#   Extract to c:\openssl-1.0.1h-mgw
 #   In MinGW MSYS:
 #     ./config
 #     make
@@ -31,16 +30,16 @@
 #   Then
 #     make
 #
-# - Build Boost C++ library version: 1.47.0
+# - Build Boost C++ library version: 1.55.0
 #   download from http://www.boost.org/users/download/
-#   Extract to c:\boost-1.47.0-mgw
+#   Extract to c:\boost-1.55.0-mgw
 #   Install Boost.Build:
 #     cd tools\build\v2
 #     bootstrap.bat
 #     b2 install --prefix=BOOST_BUILD_INSTALL_DIR
 #   Add BOOST_BUILD_INSTALL_DIR to your PATH system environment variable
 #   Build boost library in MSDOS:
-#     cd c:\boost-1.47.0-mgw
+#     cd c:\boost-1.55.0-mgw
 #     bjam toolset=gcc --build-type=complete stage
 #
 # - Build Miniupnp library version: 1.6
