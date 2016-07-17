@@ -7,7 +7,7 @@ The preferred installation is on a Debian Jessie 8.0 system. Other systems may w
 sudo echo "deb http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" >> /etc/apt/sources.list
 sudo echo "deb-src http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" >> /etc/apt/sources.list
 sudo apt-get update
-sudo apt-get install git build-essential libssl-dev libdb4.8++-dev libdb4.8-dev
+sudo apt-get -y install git build-essential libssl-dev libdb4.8++-dev libdb4.8-dev libboost-all-dev
 cd ~
 git clone https://github.com/neureal/noocoin.git
 cd ~/noocoin/src
