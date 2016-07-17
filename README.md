@@ -4,6 +4,10 @@ Neureal Official Development Repo
 ###Installation
 The preferred installation is on a Debian Jessie 8.0 system. Other systems may work too, but you will want to be sure you are using libdb4.8++-dev
 ```
+sudo echo "deb http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" >> /etc/apt/sources.list
+sudo echo "deb-src http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" >> /etc/apt/sources.list
+sudo apt-get update
+sudo apt-get install git build-essential libssl-dev libdb4.8++-dev libdb4.8-dev
 cd ~
 git clone https://github.com/neureal/noocoin.git
 cd ~/noocoin/src
