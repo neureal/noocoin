@@ -1,8 +1,9 @@
 
-Neureal Official Development Repo
+Neureal Official Repo
 ==================================
 ###Installation
-The preferred installation is on a Debian Jessie 8.0 system. Other systems may work too, but you will want to be sure you are using libdb4.8++-dev
+The preferred installation is on a Debian Jessie 8.0 system. Ubuntu may work also, but you'll want to be sure you have the right libraries.
+
 ```
 sudo echo "deb http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" >> /etc/apt/sources.list
 sudo echo "deb-src http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" >> /etc/apt/sources.list
@@ -12,9 +13,23 @@ cd ~
 git clone https://github.com/neureal/noocoin.git
 cd ~/noocoin/src
 make
+```
+
+Edit ~/.noocoin/noocoin.conf to look like this:
+```
+connect=52.8.128.178
+debug=1
+printtoconsole=1
+testnet=1
+server=1
+rpcuser=noocoinrpc
+rpcpassword=sskvik3290f87uvkk2sovllshj390gf876fdSGkza1
+```
+
+Run noocoind:
+```
 ./noocoind
 ```
-(You may need to also configure your ~/.noocoin/noocoin.conf)
 
 
 ### What is Neureal?
