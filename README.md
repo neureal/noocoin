@@ -1,7 +1,7 @@
 
 Neureal Official Repo
 ==================================
-###Installation
+###Installation Node Only
 The preferred installation is on a Debian Jessie 8.0 system. Ubuntu may work also, but you'll want to be sure you have the right libraries.
 
 ```
@@ -30,6 +30,9 @@ Run noocoind:
 ```
 ./noocoind
 ```
+###Installation With GUI
+
+Follow "Node Only" steps and also:
 
 In a separate window:
 ```
