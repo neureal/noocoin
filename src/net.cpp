@@ -871,10 +871,14 @@ void ThreadMapPort2(void* parg)
 #ifndef UPNPDISCOVER_SUCCESS
     /* miniupnpc 1.5 */
     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0);
-#else
+#elif MINIUPNPC_API_VERSION < 14
     /* miniupnpc 1.6 */
     int error = 0;
     devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, &error);
+#else
+    /* miniupnpc 1.9.20150730 */
+    int error = 0;
+    devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, 2, &error);
 #endif
 
     struct UPNPUrls urls;
@@ -998,7 +1002,9 @@ void MapPort(bool /* unused fMapPort */)
 // testnet dns seed begins with 't', all else are noocoin dns seeds.
 static const char *strDNSSeed[][2] = {
 	
-    {"seed", "home.bown.net"},
+    {"seed", "noocoin.iico.in"},
+    {"seednoo", "home.bown.net"},
+    {"seedj", "j.iico.in"},
     //{"seed", "seed.noocoin.org"},
     //{"seednoo", "seednoo.noocoin.org"},
     //{"tnseed", "tnseed.noocoin.org"},
@@ -1160,7 +1166,8 @@ unsigned int pnSeed[] =
 {
 	//0x321276b1, //50.18.118.177 nootera.com
     //0x62ca142d, //98.202.20.45 home.bown.net
-    0xc0a802d2, //192.168.2.210
+    //0xc0a802d2, //192.168.2.210
+    0x340880b2, //52.8.128.178 noocoin.iico.in (ec2)
 };
 
 void DumpAddresses()
