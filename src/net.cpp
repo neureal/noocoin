@@ -1039,8 +1039,8 @@ void ThreadDNSAddressSeed2(void* parg)
         printf("Loading addresses from DNS seeds (could take a while)\n");
 
         for (unsigned int seed_idx = 0; seed_idx < ARRAYLEN(strDNSSeed); seed_idx++) {
-            if (fTestNet && strDNSSeed[seed_idx][1][0] != 't') continue;
-            if ((!fTestNet) && strDNSSeed[seed_idx][1][0] == 't') continue;
+            if (fTestNet && strDNSSeed[seed_idx][0][0] != 't') continue;
+            if ((!fTestNet) && strDNSSeed[seed_idx][0][0] == 't') continue;
 
             vector<CNetAddr> vaddr;
             vector<CAddress> vAdd;
