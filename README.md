@@ -1,9 +1,9 @@
 
 Neureal Official Repo
 ==================================
-### Running noocoin from the binary
+### Running noocoin from binary
 
-See Release Page
+See [Release Page](https://github.com/neureal/noocoin/releases)
 
 ### Building noocoind
 
