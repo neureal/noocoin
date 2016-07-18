@@ -3,7 +3,7 @@ Neureal Official Repo
 ==================================
 ### Running noocoin from binary
 
-See [Release Page](https://github.com/neureal/noocoin/releases)
+- See [Release Page](https://github.com/neureal/noocoin/releases)
 
 ### Building noocoind
 
