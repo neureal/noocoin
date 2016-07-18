@@ -5,7 +5,7 @@ Neureal Official Repo
 
 - See [Release Page](https://github.com/neureal/noocoin/releases)
 
-### Building noocoind
+### Building noocoind from source
 
 ```
 sudo echo "deb http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" >> /etc/apt/sources.list
