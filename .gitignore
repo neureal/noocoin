@@ -13,7 +13,6 @@ src/build.h
 .noocoin
 #compilation and Qt preprocessor part
 *.qm
-Makefile
 noocoin-qt
 #resources cpp
 qrc_*.cpp
