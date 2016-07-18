@@ -17,7 +17,6 @@ make
 
 Edit ~/.noocoin/noocoin.conf to look like this:
 ```
-connect=52.8.128.178
 debug=1
 printtoconsole=1
 testnet=1
