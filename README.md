@@ -1,8 +1,11 @@
 
 Neureal Official Repo
 ==================================
-###Installation Node Only
-The preferred installation is on a Debian Jessie 8.0 system. Ubuntu may work also, but you'll want to be sure you have the right libraries.
+### Running noocoin from the binary
+
+See Release Page
+
+### Building noocoind
 
 ```
 sudo echo "deb http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" >> /etc/apt/sources.list
@@ -29,7 +32,7 @@ Run noocoind:
 ```
 ./noocoind
 ```
-###Installation With GUI
+### After building
 
 Follow "Node Only" steps and also:
 
