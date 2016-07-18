@@ -932,6 +932,7 @@ bool CTxMemPool::accept(CTxDB& txdb, CTransaction &tx, bool fCheckInputs,
         }
     }
 
+    // added for nureal - putting the data from the api in the blockchain
 	if (tx.IsData())
 	{
 		txnouttype whichType;
