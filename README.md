@@ -44,23 +44,22 @@ java -jar Noo-1.0-SNAPSHOT.jar
 
 
 ### What is Neureal?
-[Neureal](http://neureal.net/) is the first [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency) design introducing [proof-of-stake consensus] as a security model, with a combined [proof-of-stake]/[proof-of-work](https://en.wikipedia.org/wiki/Proof-of-work_system) minting system. Neureal is based on [Bitcoin](http://bitcoin.org/en/), while introducing many important innovations to cryptocurrency field including new security model, energy efficiency, better minting model and more adaptive response to rapid change in network computation power.
+[Neureal](http://neureal.net/) is the first decentralized open source protocol designed to produce a distributed artificial intelligence architecture incentivised, maintained and housed within a [cryptocurrency](https://en.wikipedia.org/wiki/Cryptocurrency).
 
 ### What is Noocoin?
 Noocoin was the original branding of the Neureal project. The name has changed but documentation may still refer to Noocoin when it should be Neureal.
 
 
 ### Neureal Resources
-Currently the Neureal project is utilizing Google Hangouts, Skype, and reddit.com/r/neureal. To be added to the skype group request contact info from skype id briianbowles.
-
-
 * Client and Source:
 [Source Code](https://github.com/neureal/noocoin)
-* Documentation: [Neureal Website](http://neureal.net),
+* Documentation: [Neureal Website](http://neureal.net)
 * Video: [How Neureal works](https://docs.google.com/file/d/0B5p19t3unCmgTF9mdlMyemxSWlE/edit)
-* Help: (http://www.reddit.com/r/neureal),
+* Help: 
+[G+ Community](https://plus.google.com/+NeurealNetAI/posts),
+[Slack Signup](https://powerful-hollows-63283.herokuapp.com/),
 [Reddit](http://www.reddit.com/r/neureal),
-[Other Sites and Links...] bitcointalk thread TODO
+[Twitter](https://twitter.com/@NeurealAI)
 
 
 Repo Guidelines
